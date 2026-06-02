@@ -28,7 +28,6 @@ public class PointGrantScheduler {
                     workDay.getWorkDayId(),
                     workDay.getWorkDate()
                 ));
-                workDayRepository.markPointGranted(workDay.getWorkDayId());
                 log.info("[Scheduler] 포인트 지급 완료. crewId={}", workDay.getCrewId());
             } catch (Exception e) {
                 log.error("[Scheduler] 포인트 지급 실패. crewId={}", workDay.getCrewId(), e);

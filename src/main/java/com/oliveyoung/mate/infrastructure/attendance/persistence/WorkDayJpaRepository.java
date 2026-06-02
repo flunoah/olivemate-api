@@ -1,4 +1,4 @@
-package com.oliveyoung.mate.infrastructure.point.persistence;
+package com.oliveyoung.mate.infrastructure.attendance.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

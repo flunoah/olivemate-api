@@ -1,6 +1,6 @@
 package com.oliveyoung.mate.presentation;
 
-import com.oliveyoung.mate.infrastructure.crew.persistence.JwtAuthFilter;
+import com.oliveyoung.mate.infrastructure.crew.auth.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

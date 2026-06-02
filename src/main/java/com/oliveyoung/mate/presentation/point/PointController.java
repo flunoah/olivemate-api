@@ -8,6 +8,7 @@ import com.oliveyoung.mate.application.point.result.PointBalanceResult;
 import com.oliveyoung.mate.application.point.result.UsePointResult;
 import com.oliveyoung.mate.presentation.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -31,7 +32,7 @@ public class PointController {
     @PostMapping("/use/{crewId}")
     public ResponseEntity<UsePointResult> use(
             @PathVariable UUID crewId,
-            @RequestBody UsePointRequest request) {
+            @Valid @RequestBody UsePointRequest request) {
         SecurityUtils.validateSelfOrAdmin(crewId);
         UsePointResult result = pointService.use(new UsePointCommand(
             crewId,
@@ -52,7 +53,7 @@ public class PointController {
     @PostMapping("/initialize/{crewId}")
     public ResponseEntity<String> initialize(
             @PathVariable UUID crewId,
-            @RequestBody InitPointRequest request) {
+            @Valid @RequestBody InitPointRequest request) {
         SecurityUtils.validateSelfOrAdmin(crewId);
         pointService.initialize(new InitPointCommand(crewId, request.amount()));
         return ResponseEntity.ok("초기 포인트 등록 완료!");

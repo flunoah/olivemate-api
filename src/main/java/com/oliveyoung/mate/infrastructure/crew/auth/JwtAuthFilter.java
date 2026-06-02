@@ -1,4 +1,4 @@
-package com.oliveyoung.mate.infrastructure.crew.persistence;
+package com.oliveyoung.mate.infrastructure.crew.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package com.oliveyoung.mate.infrastructure.point.persistence;
+package com.oliveyoung.mate.infrastructure.attendance.persistence;
 
 import jakarta.persistence.*;
 import lombok.*;

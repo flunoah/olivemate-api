@@ -5,6 +5,7 @@ import com.oliveyoung.mate.application.schedule.command.SaveScheduleCommand;
 import com.oliveyoung.mate.application.schedule.result.ScheduleResult;
 import com.oliveyoung.mate.presentation.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class ScheduleController {
 
     // 근무요일 저장
     @PostMapping
-    public ResponseEntity<String> saveSchedule(@RequestBody SaveScheduleRequest request) {
+    public ResponseEntity<String> saveSchedule(@Valid @RequestBody SaveScheduleRequest request) {
         SecurityUtils.validateSelfOrAdmin(request.crewId());
         scheduleService.saveSchedule(new SaveScheduleCommand(
             request.crewId(),

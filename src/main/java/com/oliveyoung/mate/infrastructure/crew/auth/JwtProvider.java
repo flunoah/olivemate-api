@@ -1,4 +1,4 @@
-package com.oliveyoung.mate.infrastructure.crew.persistence;
+package com.oliveyoung.mate.infrastructure.crew.auth;
 
 import com.oliveyoung.mate.application.crew.TokenProvider;
 import io.jsonwebtoken.*;
@@ -25,7 +25,6 @@ public class JwtProvider implements TokenProvider {
     @Override
     public long expireSeconds() { return expireMs / 1000; }
 
-    // ── 토큰 생성 ──────────────────────────────────
     @Override
     public String generate(UUID crewId, String role) {
         return Jwts.builder()
@@ -37,7 +36,6 @@ public class JwtProvider implements TokenProvider {
             .compact();
     }
 
-    // ── 토큰 검증 및 crewId 추출 ───────────────────
     public UUID extractCrewId(String token) {
         return UUID.fromString(claims(token).getSubject());
     }

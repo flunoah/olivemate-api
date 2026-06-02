@@ -1,4 +1,4 @@
-package com.oliveyoung.mate.infrastructure.point.persistence;
+package com.oliveyoung.mate.infrastructure.attendance.persistence;
 
 import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;

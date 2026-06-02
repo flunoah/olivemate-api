@@ -6,6 +6,7 @@ import com.oliveyoung.mate.application.point.command.UsePointCommand;
 import com.oliveyoung.mate.application.point.result.LedgerHistoryResult;
 import com.oliveyoung.mate.application.point.result.PointBalanceResult;
 import com.oliveyoung.mate.application.point.result.UsePointResult;
+import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
 import com.oliveyoung.mate.domain.point.model.Point;
 import com.oliveyoung.mate.domain.point.repository.PointPolicyRepository;
@@ -26,8 +27,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PointService {
 
-    private final PointRepository       pointRepository;
-    private final PointPolicyRepository policyRepository;
+    private final PointRepository           pointRepository;
+    private final PointPolicyRepository     policyRepository;
+    private final WorkDayRepository         workDayRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     // ── 포인트 적립 ────────────────────────────────
@@ -49,6 +51,7 @@ public class PointService {
         point.earn(policy, cmd.workDayId(), grantedAt, expiredAt);
 
         pointRepository.save(point);
+        workDayRepository.markPointGranted(cmd.workDayId());
         publishEvents(point);
     }
 

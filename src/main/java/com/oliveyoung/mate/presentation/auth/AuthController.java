@@ -5,6 +5,7 @@ import com.oliveyoung.mate.application.crew.command.LoginCommand;
 import com.oliveyoung.mate.application.crew.command.SignUpCommand;
 import com.oliveyoung.mate.application.crew.result.TokenResult;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class AuthController {
 
     // 회원가입
     @PostMapping("/signup")
-    public ResponseEntity<String> signUp(@RequestBody SignUpRequest request) {
+    public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequest request) {
         crewService.signUp(new SignUpCommand(
             request.loginId(),
             request.password(),
@@ -28,7 +29,7 @@ public class AuthController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<TokenResult> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<TokenResult> login(@Valid @RequestBody LoginRequest request) {
         TokenResult result = crewService.login(new LoginCommand(
             request.loginId(),
             request.password()

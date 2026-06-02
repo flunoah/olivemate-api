@@ -4,6 +4,7 @@ import com.oliveyoung.mate.application.attendance.AttendanceService;
 import com.oliveyoung.mate.application.attendance.command.RegisterWorkDayCommand;
 import com.oliveyoung.mate.presentation.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterWorkDayRequest request) {
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterWorkDayRequest request) {
         SecurityUtils.validateSelfOrAdmin(request.crewId());
         attendanceService.registerWorkDay(new RegisterWorkDayCommand(
             request.crewId(),
