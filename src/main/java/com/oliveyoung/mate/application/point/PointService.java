@@ -19,6 +19,7 @@ import com.oliveyoung.mate.domain.point.vo.CrewId;
 import com.oliveyoung.mate.domain.point.vo.Money;
 import com.oliveyoung.mate.domain.point.vo.PointPolicy;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PointService {
@@ -187,6 +189,39 @@ public class PointService {
         }
 
         earn(new EarnPointCommand(cmd.crewId(), workDay.getWorkDayId(), cmd.workDate()));
+    }
+
+    // ── Cron/Admin 일괄 처리 ──────────────────────
+    public void grantPointsForAll() {
+        log.info("[Admin Cron] 포인트 적립 시작 {}", LocalDate.now());
+        int[] count = {0};
+        workDayRepository.findAllNotGranted(LocalDate.now()).forEach(workDay -> {
+            try {
+                earn(new EarnPointCommand(
+                    workDay.getCrewId(),
+                    workDay.getWorkDayId(),
+                    workDay.getWorkDate()
+                ));
+                count[0]++;
+            } catch (Exception e) {
+                log.error("[Admin Cron] 포인트 지급 실패. crewId={}", workDay.getCrewId(), e);
+            }
+        });
+        log.info("[Admin Cron] 처리 완료 {}건", count[0]);
+    }
+
+    public void expireAllPoints() {
+        log.info("[Admin Cron] 포인트 만료 처리 시작 {}", LocalDate.now());
+        int[] count = {0};
+        pointRepository.findAllCrewIdsWithExpiringPoints().forEach(crewId -> {
+            try {
+                expirePoints(crewId.id());
+                count[0]++;
+            } catch (Exception e) {
+                log.error("[Admin Cron] 만료 처리 실패. crewId={}", crewId.id(), e);
+            }
+        });
+        log.info("[Admin Cron] 처리 완료 {}건", count[0]);
     }
 
     // ── private helpers ────────────────────────────
