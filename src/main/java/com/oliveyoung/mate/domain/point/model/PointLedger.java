@@ -75,6 +75,13 @@ public class PointLedger {
         this.remaining = this.remaining.subtract(deductAmount);
     }
 
+    public void restore(Money restoreAmount) {
+        if (type != LedgerType.EARN && type != LedgerType.INIT) {
+            throw new IllegalStateException("EARN 원장만 복원 가능합니다.");
+        }
+        this.remaining = this.remaining.add(restoreAmount);
+    }
+
     public boolean isEarnType()                { return type == LedgerType.EARN; }
     public boolean hasRemaining()              { return !remaining.isZero(); }
     public boolean isExpired(LocalDateTime at) {

@@ -1,14 +1,18 @@
 package com.oliveyoung.mate.application.point;
 
+import com.oliveyoung.mate.application.point.command.CancelUseCommand;
 import com.oliveyoung.mate.application.point.command.EarnPointCommand;
+import com.oliveyoung.mate.application.point.command.GrantPointManualCommand;
 import com.oliveyoung.mate.application.point.command.InitPointCommand;
 import com.oliveyoung.mate.application.point.command.UsePointCommand;
 import com.oliveyoung.mate.application.point.result.LedgerHistoryResult;
 import com.oliveyoung.mate.application.point.result.PointBalanceResult;
 import com.oliveyoung.mate.application.point.result.UsePointResult;
+import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
 import com.oliveyoung.mate.domain.point.model.Point;
+import com.oliveyoung.mate.domain.point.model.PointLedger;
 import com.oliveyoung.mate.domain.point.repository.PointPolicyRepository;
 import com.oliveyoung.mate.domain.point.repository.PointRepository;
 import com.oliveyoung.mate.domain.point.vo.CrewId;
@@ -16,9 +20,11 @@ import com.oliveyoung.mate.domain.point.vo.Money;
 import com.oliveyoung.mate.domain.point.vo.PointPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -138,6 +144,49 @@ public class PointService {
         point.initialize(Money.of(cmd.amount()));
 
         pointRepository.save(point);
+    }
+
+    // ── 포인트 사용 취소 (당일 건) ─────────────────
+    @Transactional
+    public void cancelUse(CancelUseCommand cmd) {
+        CrewId crewId = CrewId.of(cmd.crewId());
+
+        PointLedger useLedger = pointRepository.findLedgerById(cmd.ledgerId())
+            .orElseThrow(() -> new IllegalArgumentException("사용 내역을 찾을 수 없습니다."));
+
+        if (useLedger.getType() != PointLedger.LedgerType.USE) {
+            throw new IllegalArgumentException("사용 내역이 아닙니다.");
+        }
+        if (!useLedger.getCrewId().equals(crewId)) {
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+        if (!useLedger.getCreatedAt().toLocalDate().equals(LocalDate.now())) {
+            throw new IllegalStateException("당일 사용 건만 취소 가능합니다.");
+        }
+
+        Point point = pointRepository.findByCrewId(crewId)
+            .orElseThrow(() -> new PointAccountNotFoundException(crewId));
+
+        point.cancelUse(useLedger.getTxId());
+        pointRepository.save(point);
+        pointRepository.deleteLedgersByTxId(useLedger.getTxId());
+    }
+
+    // ── 소급 적립 (관리자 전용) ────────────────────
+    @Transactional
+    public void grantPointForDate(GrantPointManualCommand cmd) {
+        WorkDay workDay = workDayRepository.findByCrewIdAndWorkDate(cmd.crewId(), cmd.workDate())
+            .orElseThrow(() -> new IllegalArgumentException(
+                "근무일을 찾을 수 없습니다. date=" + cmd.workDate()));
+
+        if (workDay.isPointGranted()) {
+            throw new IllegalStateException("이미 포인트가 지급된 근무일입니다.");
+        }
+        if (workDay.isSkipped()) {
+            throw new IllegalStateException("결근 처리된 근무일입니다.");
+        }
+
+        earn(new EarnPointCommand(cmd.crewId(), workDay.getWorkDayId(), cmd.workDate()));
     }
 
     // ── private helpers ────────────────────────────

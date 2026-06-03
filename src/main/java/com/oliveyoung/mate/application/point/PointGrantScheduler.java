@@ -17,7 +17,7 @@ public class PointGrantScheduler {
     private final PointService      pointService;
 
     // workDate < 오늘인 미지급 근무일 처리 — 자연스럽게 1일 지연 지급 정책 적용
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
     public void grantPoints() {
         log.info("[Scheduler] 포인트 지급 시작");
 

@@ -20,7 +20,7 @@ public class WeeklyWorkDayScheduler {
     private final AttendanceService      attendanceService;
     private final WorkDayRepository      workDayRepository;
 
-    @Scheduled(cron = "0 0 0 * * MON", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 23 * * SUN", zone = "Asia/Seoul")
     public void generateWeeklyWorkDays() {
         log.info("[Scheduler] 주간 근무일 자동 생성 시작");
 

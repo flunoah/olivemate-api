@@ -123,6 +123,43 @@ public class Point {
         }
     }
 
+    // ── 포인트 사용 취소 (당일 txId 기준) ─────────
+    public void cancelUse(UUID txId) {
+        List<PointLedger> useLedgers = ledgers.stream()
+            .filter(l -> l.getType() == PointLedger.LedgerType.USE && txId.equals(l.getTxId()))
+            .toList();
+
+        if (useLedgers.isEmpty()) {
+            throw new IllegalArgumentException("취소할 사용 내역이 없습니다.");
+        }
+
+        Money totalToRestore = useLedgers.stream()
+            .map(PointLedger::getAmount)
+            .reduce(Money.zero(), Money::add);
+
+        // 차감된 EARN 원장을 FIFO 순서대로 복원
+        List<PointLedger> earnTargets = ledgers.stream()
+            .filter(l -> (l.getType() == PointLedger.LedgerType.EARN
+                       || l.getType() == PointLedger.LedgerType.INIT)
+                      && l.getAmount().amount() > l.getRemaining().amount())
+            .sorted(Comparator.comparing(l ->
+                l.getExpiredAt() == null ? LocalDateTime.MAX : l.getExpiredAt()))
+            .toList();
+
+        Money toRestore = totalToRestore;
+        for (PointLedger earn : earnTargets) {
+            if (toRestore.isZero()) break;
+            long capacity = earn.getAmount().amount() - earn.getRemaining().amount();
+            if (capacity <= 0) continue;
+            Money restore = toRestore.amount() > capacity ? Money.of(capacity) : toRestore;
+            earn.restore(restore);
+            dirtyLedgerIds.add(earn.getLedgerId());
+            toRestore = toRestore.subtract(restore);
+        }
+
+        balance = balance.add(totalToRestore);
+    }
+
     // ── 만료 예정 포인트 조회 ──────────────────────
     public Money getExpiringAmount(LocalDateTime from, LocalDateTime to) {
         return ledgers.stream()

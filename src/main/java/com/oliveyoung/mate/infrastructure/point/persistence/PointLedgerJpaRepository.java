@@ -37,4 +37,8 @@ public interface PointLedgerJpaRepository
         @Param("crewId") UUID crewId,
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to);
+
+    @Modifying
+    @Query("DELETE FROM PointLedgerJpaEntity l WHERE l.txId = :txId")
+    void deleteByTxId(@Param("txId") UUID txId);
 }

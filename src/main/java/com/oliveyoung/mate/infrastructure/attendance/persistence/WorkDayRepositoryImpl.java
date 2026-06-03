@@ -73,7 +73,6 @@ public class WorkDayRepositoryImpl implements WorkDayRepository {
 
     @Override
     public void markPointGranted(UUID workDayId) {
-        workDayJpaRepository.findById(workDayId)
-            .ifPresent(WorkDayJpaEntity::markPointGranted);
+        workDayJpaRepository.markPointGranted(workDayId);
     }
 }

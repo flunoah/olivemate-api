@@ -1,6 +1,8 @@
 package com.oliveyoung.mate.presentation.point;
 
 import com.oliveyoung.mate.application.point.PointService;
+import com.oliveyoung.mate.application.point.command.CancelUseCommand;
+import com.oliveyoung.mate.application.point.command.GrantPointManualCommand;
 import com.oliveyoung.mate.application.point.command.InitPointCommand;
 import com.oliveyoung.mate.application.point.command.UsePointCommand;
 import com.oliveyoung.mate.application.point.result.LedgerHistoryResult;
@@ -10,6 +12,7 @@ import com.oliveyoung.mate.presentation.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +60,23 @@ public class PointController {
         SecurityUtils.validateSelfOrAdmin(crewId);
         pointService.initialize(new InitPointCommand(crewId, request.amount()));
         return ResponseEntity.ok("초기 포인트 등록 완료!");
+    }
+
+    // 포인트 사용 취소 (당일 건)
+    @PostMapping("/cancel")
+    public ResponseEntity<String> cancelUse(@Valid @RequestBody CancelUseRequest request) {
+        SecurityUtils.validateSelfOrAdmin(request.crewId());
+        pointService.cancelUse(new CancelUseCommand(request.ledgerId(), request.crewId()));
+        return ResponseEntity.ok("포인트 사용이 취소됐습니다.");
+    }
+
+    // 소급 적립 (관리자 전용)
+    @PostMapping("/grant/manual")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> grantManual(@Valid @RequestBody GrantPointManualRequest request) {
+        pointService.grantPointForDate(
+            new GrantPointManualCommand(request.crewId(), request.workDate()));
+        return ResponseEntity.ok("포인트 소급 적립 완료!");
     }
 }
 

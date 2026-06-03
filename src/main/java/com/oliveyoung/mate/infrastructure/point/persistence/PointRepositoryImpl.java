@@ -1,6 +1,7 @@
 package com.oliveyoung.mate.infrastructure.point.persistence;
 
 import com.oliveyoung.mate.domain.point.model.Point;
+import com.oliveyoung.mate.domain.point.model.PointLedger;
 import com.oliveyoung.mate.domain.point.repository.PointRepository;
 import com.oliveyoung.mate.domain.point.vo.CrewId;
 import com.oliveyoung.mate.domain.point.vo.Money;
@@ -77,5 +78,15 @@ public class PointRepositoryImpl implements PointRepository {
         Long sum = ledgerJpaRepo.sumRemainingByCrewIdAndExpiredAtBetween(
             crewId.id(), from, to);
         return sum != null ? Money.of(sum) : Money.zero();
+    }
+
+    @Override
+    public Optional<PointLedger> findLedgerById(UUID ledgerId) {
+        return ledgerJpaRepo.findById(ledgerId).map(mapper::toLedgerDomain);
+    }
+
+    @Override
+    public void deleteLedgersByTxId(UUID txId) {
+        ledgerJpaRepo.deleteByTxId(txId);
     }
 }
