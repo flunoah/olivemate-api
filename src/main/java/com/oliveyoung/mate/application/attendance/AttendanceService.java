@@ -44,15 +44,27 @@ public class AttendanceService {
         workDayRepository.findByCrewIdAndWorkDate(crewId, date)
             .ifPresentOrElse(
                 workDay -> {
-                    if (!workDay.isPointGranted()) {
-                        workDayRepository.deleteByCrewIdAndWorkDate(crewId, date);
-                    } else {
-                        workDay.skip();
-                        workDayRepository.save(workDay);
-                    }
+                    workDay.skip();
+                    workDayRepository.save(workDay);
                 },
                 // 아직 스케줄러가 생성하기 전 → 결근 레코드 선점
                 () -> workDayRepository.save(WorkDay.createAbsent(crewId, date))
+            );
+    }
+
+    // ── 결근 복원 ──────────────────────────────────
+    @Transactional
+    public void reinstateWorkDay(UUID crewId, LocalDate date) {
+        workDayRepository.findByCrewIdAndWorkDate(crewId, date)
+            .ifPresentOrElse(
+                workDay -> {
+                    if (!workDay.isSkipped()) {
+                        throw new IllegalStateException("이미 정상 근무일입니다. date=" + date);
+                    }
+                    workDay.reinstate();
+                    workDayRepository.save(workDay);
+                },
+                () -> registerWorkDay(new RegisterWorkDayCommand(crewId, date))
             );
     }
 

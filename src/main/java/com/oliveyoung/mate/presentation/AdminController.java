@@ -26,7 +26,7 @@ public class AdminController {
 
     @PostMapping("/grant-points-all")
     public ResponseEntity<String> grantPointsAll(
-            @RequestHeader("X-Admin-Key") String adminKey) {
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         if (isUnauthorized(adminKey)) return ResponseEntity.status(403).body("Forbidden");
         pointService.grantPointsForAll();
         return ResponseEntity.ok("포인트 적립 완료");
@@ -34,7 +34,7 @@ public class AdminController {
 
     @PostMapping("/expire-points-all")
     public ResponseEntity<String> expirePointsAll(
-            @RequestHeader("X-Admin-Key") String adminKey) {
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         if (isUnauthorized(adminKey)) return ResponseEntity.status(403).body("Forbidden");
         pointService.expireAllPoints();
         return ResponseEntity.ok("포인트 만료 처리 완료");
@@ -42,7 +42,7 @@ public class AdminController {
 
     @PostMapping("/generate-workdays")
     public ResponseEntity<String> generateWorkdays(
-            @RequestHeader("X-Admin-Key") String adminKey) {
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         if (isUnauthorized(adminKey)) return ResponseEntity.status(403).body("Forbidden");
         scheduleService.generateNextWeekWorkDays();
         return ResponseEntity.ok("근무일 생성 완료");

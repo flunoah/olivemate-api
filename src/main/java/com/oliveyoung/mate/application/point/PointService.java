@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -195,7 +196,7 @@ public class PointService {
     public void grantPointsForAll() {
         log.info("[Admin Cron] 포인트 적립 시작 {}", LocalDate.now());
         int[] count = {0};
-        workDayRepository.findAllNotGranted(LocalDate.now()).forEach(workDay -> {
+        workDayRepository.findAllNotGranted(LocalDate.now(ZoneId.of("Asia/Seoul"))).forEach(workDay -> {
             try {
                 earn(new EarnPointCommand(
                     workDay.getCrewId(),

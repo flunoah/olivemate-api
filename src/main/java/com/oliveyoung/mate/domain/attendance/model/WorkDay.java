@@ -60,6 +60,11 @@ public class WorkDay {
         this.skipped = true;
     }
 
+    // ── 결근 복원 ──────────────────────────────────
+    public void reinstate() {
+        this.skipped = false;
+    }
+
     // ── Getters ────────────────────────────────────
     public UUID          getWorkDayId()    { return workDayId; }
     public UUID          getCrewId()       { return crewId; }
