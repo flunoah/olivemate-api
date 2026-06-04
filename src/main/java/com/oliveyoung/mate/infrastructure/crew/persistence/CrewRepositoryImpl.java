@@ -4,6 +4,7 @@ import com.oliveyoung.mate.domain.crew.model.Crew;
 import com.oliveyoung.mate.domain.crew.repository.CrewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,6 +41,13 @@ public class CrewRepositoryImpl implements CrewRepository {
     @Override
     public boolean existsByLoginId(String loginId) {
         return crewJpaRepository.existsByLoginId(loginId);
+    }
+
+    @Override
+    public List<Crew> findAllActive() {
+        return crewJpaRepository.findAllByIsActiveTrue().stream()
+            .map(this::toDomain)
+            .toList();
     }
 
     private Crew toDomain(CrewJpaEntity e) {

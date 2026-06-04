@@ -13,6 +13,16 @@ public final class SecurityUtils {
         return (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    // ADMIN만 허용
+    public static void validateAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
+            throw new AccessDeniedException("관리자 권한이 필요합니다.");
+        }
+    }
+
     // 본인 또는 ADMIN만 허용
     public static void validateSelfOrAdmin(UUID requestedCrewId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

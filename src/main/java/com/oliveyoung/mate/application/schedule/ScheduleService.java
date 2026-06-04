@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,7 +50,7 @@ public class ScheduleService {
         log.info("[Admin Cron] 주간 근무일 생성 시작 {}", LocalDate.now());
         int[] count = {0};
 
-        LocalDate monday = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDate monday = LocalDate.now(ZoneId.of("Asia/Seoul")).with(DayOfWeek.MONDAY).plusWeeks(1);
 
         scheduleRepository.findAllActive().forEach(schedule -> {
             if (schedule.getStartDate().isAfter(monday)) return;
