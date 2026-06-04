@@ -22,4 +22,7 @@ public interface PointRepository {
 
     // 원장 전체 로드 없이 만료 예정 포인트 합산
     Money sumExpiringBetween(CrewId crewId, LocalDateTime from, LocalDateTime to);
+
+    // 이번달 적립/사용 합산
+    Money sumByTypeAndPeriod(CrewId crewId, String type, LocalDateTime from, LocalDateTime to);
 }

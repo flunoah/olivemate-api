@@ -15,8 +15,9 @@ public interface PointLedgerJpaRepository
 
     @Query("""
         SELECT DISTINCT l.crewId FROM PointLedgerJpaEntity l
-        WHERE l.ledgerType = 'EARN'
+        WHERE l.ledgerType IN ('EARN', 'INIT')
           AND l.remaining > 0
+          AND l.expiredAt IS NOT NULL
           AND l.expiredAt < :now
         """)
     List<UUID> findDistinctCrewIdsWithExpiringPoints(@Param("now") LocalDateTime now);
@@ -28,13 +29,27 @@ public interface PointLedgerJpaRepository
     @Query("""
         SELECT COALESCE(SUM(l.remaining), 0) FROM PointLedgerJpaEntity l
         WHERE l.crewId = :crewId
-          AND l.ledgerType = 'EARN'
+          AND l.ledgerType IN ('EARN', 'INIT')
           AND l.remaining > 0
+          AND l.expiredAt IS NOT NULL
           AND l.expiredAt >= :from
           AND l.expiredAt < :to
         """)
     Long sumRemainingByCrewIdAndExpiredAtBetween(
         @Param("crewId") UUID crewId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
+    @Query("""
+        SELECT COALESCE(SUM(l.amount), 0) FROM PointLedgerJpaEntity l
+        WHERE l.crewId = :crewId
+          AND l.ledgerType = :type
+          AND l.createdAt >= :from
+          AND l.createdAt < :to
+        """)
+    Long sumAmountByCrewIdAndTypeAndCreatedAtBetween(
+        @Param("crewId") UUID crewId,
+        @Param("type") String type,
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to);
 

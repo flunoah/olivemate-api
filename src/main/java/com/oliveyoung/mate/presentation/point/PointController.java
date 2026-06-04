@@ -40,7 +40,8 @@ public class PointController {
         UsePointResult result = pointService.use(new UsePointCommand(
             crewId,
             request.amount(),
-            request.description()
+            request.description(),
+            request.usedAt()
         ));
         return ResponseEntity.ok(result);
     }

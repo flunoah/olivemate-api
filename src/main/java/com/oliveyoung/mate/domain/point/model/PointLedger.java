@@ -59,11 +59,12 @@ public class PointLedger {
         );
     }
 
-    public static PointLedger init(CrewId crewId, Money amount, LocalDateTime grantedAt) {
-    return new PointLedger(
-        UUID.randomUUID(), crewId, null, null,
-        LedgerType.INIT, amount, amount,
-        grantedAt, null, LocalDateTime.now()
+    public static PointLedger init(CrewId crewId, Money amount,
+                                   LocalDateTime grantedAt, LocalDateTime expiredAt) {
+        return new PointLedger(
+            UUID.randomUUID(), crewId, null, null,
+            LedgerType.INIT, amount, amount,
+            grantedAt, expiredAt, LocalDateTime.now()
         );
     }
 

@@ -46,7 +46,7 @@ public class Point {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        PointLedger ledger = PointLedger.init(crewId, amount, now);
+        PointLedger ledger = PointLedger.init(crewId, amount, now, now.plusWeeks(3));
         ledgers.add(ledger);
         newLedgers.add(ledger);
         balance = balance.add(amount);

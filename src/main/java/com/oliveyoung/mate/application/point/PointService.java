@@ -75,7 +75,10 @@ public class PointService {
         UUID txId = UUID.randomUUID();
         Money requestAmount = Money.of(cmd.amount());
 
-        point.use(requestAmount, txId, LocalDateTime.now());
+        LocalDateTime usedAt = cmd.usedAt() != null
+            ? cmd.usedAt().atStartOfDay(ZoneId.of("Asia/Seoul")).toLocalDateTime()
+            : LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        point.use(requestAmount, txId, usedAt);
 
         pointRepository.save(point);
         publishEvents(point);
@@ -94,14 +97,23 @@ public class PointService {
         Money balance = pointRepository.findBalanceByCrewId(cid)
             .orElseThrow(() -> new PointAccountNotFoundException(cid));
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now        = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        LocalDateTime monthStart = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime monthEnd   = monthStart.plusMonths(1);
+
         Money expiringIn7Days  = pointRepository.sumExpiringBetween(cid, now, now.plusDays(7));
         Money expiringIn30Days = pointRepository.sumExpiringBetween(cid, now, now.plusDays(30));
+        Money monthlyEarned    = pointRepository.sumByTypeAndPeriod(cid, "EARN", monthStart, monthEnd);
+        Money monthlyUsed      = pointRepository.sumByTypeAndPeriod(cid, "USE", monthStart, monthEnd);
+        Money monthlyExpiring  = pointRepository.sumExpiringBetween(cid, now, monthEnd);
 
         return new PointBalanceResult(
             balance.amount(),
             expiringIn7Days.amount(),
-            expiringIn30Days.amount()
+            expiringIn30Days.amount(),
+            monthlyEarned.amount(),
+            monthlyUsed.amount(),
+            monthlyExpiring.amount()
         );
     }
 
