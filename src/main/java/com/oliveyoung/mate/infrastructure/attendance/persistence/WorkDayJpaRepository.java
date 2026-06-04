@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public interface WorkDayJpaRepository
     @Query("SELECT w FROM WorkDayJpaEntity w WHERE w.pointGranted = false AND w.skipped = false AND w.workDate < :today")
     List<WorkDayJpaEntity> findAllNotGranted(@Param("today") LocalDate today);
 
+    @Transactional
     @Modifying
     @Query("UPDATE WorkDayJpaEntity w SET w.pointGranted = true WHERE w.workDayId = :workDayId")
     void markPointGranted(@Param("workDayId") UUID workDayId);
