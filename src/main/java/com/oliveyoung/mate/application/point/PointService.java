@@ -95,7 +95,7 @@ public class PointService {
         CrewId cid = CrewId.of(crewId);
 
         Money balance = pointRepository.findBalanceByCrewId(cid)
-            .orElseThrow(() -> new PointAccountNotFoundException(cid));
+            .orElse(Money.zero());
 
         LocalDateTime now        = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         LocalDateTime monthStart = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
