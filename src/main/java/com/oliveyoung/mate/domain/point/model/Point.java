@@ -74,18 +74,14 @@ public class Point {
 
         Money remaining = requestAmount;
 
-        // FIFO: EARN은 만료일 ASC, INIT는 만료일 없으므로 맨 뒤에 처리
         List<PointLedger> targets = ledgers.stream()
-        .filter(l -> (l.getType() == PointLedger.LedgerType.EARN
-                   || l.getType() == PointLedger.LedgerType.INIT)
-                  && l.hasRemaining()
-                  && !l.isExpired(usedAt))
-        .sorted(Comparator.comparing(l -> {
-            // INIT은 만료일 없으므로 맨 뒤로
-            if (l.getExpiredAt() == null) return java.time.LocalDateTime.MAX;
-            return l.getExpiredAt();
-        }))
-        .toList();
+            .filter(l -> (l.getType() == PointLedger.LedgerType.EARN
+                       || l.getType() == PointLedger.LedgerType.INIT)
+                      && l.hasRemaining()
+                      && !l.isExpired(usedAt))
+            .sorted(Comparator.comparing(l ->
+                l.getExpiredAt() == null ? LocalDateTime.MAX : l.getExpiredAt()))
+            .toList();
 
         for (PointLedger earn : targets) {
             if (remaining.isZero()) break;
@@ -106,9 +102,10 @@ public class Point {
     // ── 포인트 자동 만료 ───────────────────────────
     public void expireOld(LocalDateTime now) {
         List<PointLedger> expiredTargets = ledgers.stream()
-            .filter(l -> l.getType() == PointLedger.LedgerType.EARN
-                    && l.hasRemaining()
-                    && l.isExpired(now))
+            .filter(l -> (l.getType() == PointLedger.LedgerType.EARN
+                       || l.getType() == PointLedger.LedgerType.INIT)
+                      && l.hasRemaining()
+                      && l.isExpired(now))
             .toList();
 
         for (PointLedger earn : expiredTargets) {
