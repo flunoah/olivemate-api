@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -58,10 +59,13 @@ public class PointRepositoryImpl implements PointRepository {
         return point;
     }
 
+    private static final Set<PointLedgerJpaEntity.LedgerType> EARN_TYPES =
+        Set.of(PointLedgerJpaEntity.LedgerType.EARN, PointLedgerJpaEntity.LedgerType.INIT);
+
     @Override
     public List<CrewId> findAllCrewIdsWithExpiringPoints() {
         return ledgerJpaRepo
-            .findDistinctCrewIdsWithExpiringPoints(LocalDateTime.now())
+            .findDistinctCrewIdsWithExpiringPoints(EARN_TYPES, LocalDateTime.now())
             .stream()
             .map(CrewId::of)
             .toList();
@@ -76,14 +80,14 @@ public class PointRepositoryImpl implements PointRepository {
     @Override
     public Money sumExpiringBetween(CrewId crewId, LocalDateTime from, LocalDateTime to) {
         Long sum = ledgerJpaRepo.sumRemainingByCrewIdAndExpiredAtBetween(
-            crewId.id(), from, to);
+            crewId.id(), EARN_TYPES, from, to);
         return sum != null ? Money.of(sum) : Money.zero();
     }
 
     @Override
     public Money sumByTypeAndPeriod(CrewId crewId, String type, LocalDateTime from, LocalDateTime to) {
         Long sum = ledgerJpaRepo.sumAmountByCrewIdAndTypeAndCreatedAtBetween(
-            crewId.id(), type, from, to);
+            crewId.id(), PointLedgerJpaEntity.LedgerType.valueOf(type), from, to);
         return sum != null ? Money.of(sum) : Money.zero();
     }
 

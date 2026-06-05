@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,12 +16,14 @@ public interface PointLedgerJpaRepository
 
     @Query("""
         SELECT DISTINCT l.crewId FROM PointLedgerJpaEntity l
-        WHERE l.ledgerType IN ('EARN', 'INIT')
+        WHERE l.ledgerType IN :types
           AND l.remaining > 0
           AND l.expiredAt IS NOT NULL
           AND l.expiredAt < :now
         """)
-    List<UUID> findDistinctCrewIdsWithExpiringPoints(@Param("now") LocalDateTime now);
+    List<UUID> findDistinctCrewIdsWithExpiringPoints(
+        @Param("types") Collection<PointLedgerJpaEntity.LedgerType> types,
+        @Param("now") LocalDateTime now);
 
     @Modifying
     @Query("UPDATE PointLedgerJpaEntity l SET l.remaining = :remaining WHERE l.ledgerId = :ledgerId")
@@ -29,7 +32,7 @@ public interface PointLedgerJpaRepository
     @Query("""
         SELECT COALESCE(SUM(l.remaining), 0) FROM PointLedgerJpaEntity l
         WHERE l.crewId = :crewId
-          AND l.ledgerType IN ('EARN', 'INIT')
+          AND l.ledgerType IN :types
           AND l.remaining > 0
           AND l.expiredAt IS NOT NULL
           AND l.expiredAt >= :from
@@ -37,6 +40,7 @@ public interface PointLedgerJpaRepository
         """)
     Long sumRemainingByCrewIdAndExpiredAtBetween(
         @Param("crewId") UUID crewId,
+        @Param("types") Collection<PointLedgerJpaEntity.LedgerType> types,
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to);
 
@@ -49,7 +53,7 @@ public interface PointLedgerJpaRepository
         """)
     Long sumAmountByCrewIdAndTypeAndCreatedAtBetween(
         @Param("crewId") UUID crewId,
-        @Param("type") String type,
+        @Param("type") PointLedgerJpaEntity.LedgerType type,
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to);
 
