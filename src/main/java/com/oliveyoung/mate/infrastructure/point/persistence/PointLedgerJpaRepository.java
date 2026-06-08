@@ -60,4 +60,13 @@ public interface PointLedgerJpaRepository
     @Modifying
     @Query("DELETE FROM PointLedgerJpaEntity l WHERE l.txId = :txId")
     void deleteByTxId(@Param("txId") UUID txId);
+
+    @Modifying
+    @Query(value = """
+        UPDATE point_ledger
+           SET expired_at = granted_at + INTERVAL '21 days'
+         WHERE ledger_type = 'INIT'
+           AND expired_at IS NULL
+        """, nativeQuery = true)
+    int backfillInitExpiredAt();
 }
