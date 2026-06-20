@@ -1,9 +1,7 @@
 package com.oliveyoung.mate.presentation;
 
-import com.oliveyoung.mate.application.attendance.AttendanceService;
 import com.oliveyoung.mate.application.point.PointService;
 import com.oliveyoung.mate.application.schedule.ScheduleService;
-import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.crew.model.Crew;
 import com.oliveyoung.mate.domain.crew.repository.CrewRepository;

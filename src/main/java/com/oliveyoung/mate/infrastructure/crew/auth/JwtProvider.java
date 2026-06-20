@@ -23,17 +23,18 @@ public class JwtProvider implements TokenProvider {
     }
 
     @Override
-    public long expireSeconds() { return expireMs / 1000; }
+    public long expireSeconds() { return expireMs <= 0 ? -1 : expireMs / 1000; }
 
     @Override
     public String generate(UUID crewId, String role) {
-        return Jwts.builder()
+        var builder = Jwts.builder()
             .subject(crewId.toString())
             .claim("role", role)
-            .issuedAt(new Date())
-            .expiration(new Date(System.currentTimeMillis() + expireMs))
-            .signWith(key)
-            .compact();
+            .issuedAt(new Date());
+        if (expireMs > 0) {
+            builder.expiration(new Date(System.currentTimeMillis() + expireMs));
+        }
+        return builder.signWith(key).compact();
     }
 
     public UUID extractCrewId(String token) {
