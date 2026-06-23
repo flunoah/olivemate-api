@@ -16,10 +16,10 @@ import java.util.UUID;
 public class CrewScheduleJpaEntity {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID scheduleId;
 
-    @Column(name = "crew_id", columnDefinition = "BINARY(16)", nullable = false)
+    @Column(name = "crew_id", columnDefinition = "UUID", nullable = false)
     private UUID crewId;
 
     @Column(name = "days_of_week", nullable = false)

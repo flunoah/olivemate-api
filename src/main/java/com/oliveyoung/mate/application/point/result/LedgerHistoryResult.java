@@ -9,5 +9,6 @@ public record LedgerHistoryResult(
     long remaining,
     LocalDateTime grantedAt,
     LocalDateTime expiredAt,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    String description
 ) {}

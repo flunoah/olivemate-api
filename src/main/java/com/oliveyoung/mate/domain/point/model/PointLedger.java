@@ -19,6 +19,7 @@ public class PointLedger {
     private final LocalDateTime grantedAt;
     private final LocalDateTime expiredAt;
     private final LocalDateTime createdAt;
+    private final String        description;
 
     // ── 팩토리 메서드 ──────────────────────────────
 
@@ -26,9 +27,10 @@ public class PointLedger {
     public static PointLedger reconstruct(UUID ledgerId, CrewId crewId, UUID workDayId,
                                           UUID txId, LedgerType type, Money amount,
                                           Money remaining, LocalDateTime grantedAt,
-                                          LocalDateTime expiredAt, LocalDateTime createdAt) {
+                                          LocalDateTime expiredAt, LocalDateTime createdAt,
+                                          String description) {
         return new PointLedger(ledgerId, crewId, workDayId, txId, type, amount,
-                               remaining, grantedAt, expiredAt, createdAt);
+                               remaining, grantedAt, expiredAt, createdAt, description);
     }
 
     public static PointLedger earn(CrewId crewId, UUID workDayId,
@@ -37,16 +39,17 @@ public class PointLedger {
         return new PointLedger(
             UUID.randomUUID(), crewId, workDayId, null,
             LedgerType.EARN, amount, amount,
-            grantedAt, expiredAt, LocalDateTime.now()
+            grantedAt, expiredAt, LocalDateTime.now(), null
         );
     }
 
     public static PointLedger use(CrewId crewId, UUID txId,
-                                  Money amount, LocalDateTime usedAt) {
+                                  Money amount, LocalDateTime usedAt,
+                                  String description) {
         return new PointLedger(
             UUID.randomUUID(), crewId, null, txId,
             LedgerType.USE, amount, Money.zero(),
-            usedAt, null, LocalDateTime.now()
+            usedAt, null, LocalDateTime.now(), description
         );
     }
 
@@ -55,7 +58,7 @@ public class PointLedger {
         return new PointLedger(
             UUID.randomUUID(), crewId, null, null,
             LedgerType.EXPIRE, amount, Money.zero(),
-            expiredAt, expiredAt, LocalDateTime.now()
+            expiredAt, expiredAt, LocalDateTime.now(), null
         );
     }
 
@@ -64,7 +67,7 @@ public class PointLedger {
         return new PointLedger(
             UUID.randomUUID(), crewId, null, null,
             LedgerType.INIT, amount, amount,
-            grantedAt, expiredAt, LocalDateTime.now()
+            grantedAt, expiredAt, LocalDateTime.now(), null
         );
     }
 
@@ -93,28 +96,31 @@ public class PointLedger {
     private PointLedger(UUID ledgerId, CrewId crewId, UUID workDayId,
                         UUID txId, LedgerType type, Money amount,
                         Money remaining, LocalDateTime grantedAt,
-                        LocalDateTime expiredAt, LocalDateTime createdAt) {
-        this.ledgerId  = ledgerId;
-        this.crewId    = crewId;
-        this.workDayId = workDayId;
-        this.txId      = txId;
-        this.type      = type;
-        this.amount    = amount;
-        this.remaining = remaining;
-        this.grantedAt = grantedAt;
-        this.expiredAt = expiredAt;
-        this.createdAt = createdAt;
+                        LocalDateTime expiredAt, LocalDateTime createdAt,
+                        String description) {
+        this.ledgerId    = ledgerId;
+        this.crewId      = crewId;
+        this.workDayId   = workDayId;
+        this.txId        = txId;
+        this.type        = type;
+        this.amount      = amount;
+        this.remaining   = remaining;
+        this.grantedAt   = grantedAt;
+        this.expiredAt   = expiredAt;
+        this.createdAt   = createdAt;
+        this.description = description;
     }
 
     // ── Getters ────────────────────────────────────
-    public UUID          getLedgerId()  { return ledgerId; }
-    public CrewId        getCrewId()    { return crewId; }
-    public UUID          getWorkDayId() { return workDayId; }
-    public UUID          getTxId()      { return txId; }
-    public LedgerType    getType()      { return type; }
-    public Money         getAmount()    { return amount; }
-    public Money         getRemaining() { return remaining; }
-    public LocalDateTime getGrantedAt() { return grantedAt; }
-    public LocalDateTime getExpiredAt() { return expiredAt; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public UUID          getLedgerId()    { return ledgerId; }
+    public CrewId        getCrewId()      { return crewId; }
+    public UUID          getWorkDayId()   { return workDayId; }
+    public UUID          getTxId()        { return txId; }
+    public LedgerType    getType()        { return type; }
+    public Money         getAmount()      { return amount; }
+    public Money         getRemaining()   { return remaining; }
+    public LocalDateTime getGrantedAt()   { return grantedAt; }
+    public LocalDateTime getExpiredAt()   { return expiredAt; }
+    public LocalDateTime getCreatedAt()   { return createdAt; }
+    public String        getDescription() { return description; }
 }

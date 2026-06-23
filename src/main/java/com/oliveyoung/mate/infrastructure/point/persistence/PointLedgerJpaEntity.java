@@ -20,16 +20,16 @@ public class PointLedgerJpaEntity {
     public enum LedgerType { EARN, USE, EXPIRE, INIT }
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID ledgerId;
 
-    @Column(name = "crew_id", columnDefinition = "BINARY(16)", nullable = false)
+    @Column(name = "crew_id", columnDefinition = "UUID", nullable = false)
     private UUID crewId;
 
-    @Column(name = "work_day_id", columnDefinition = "BINARY(16)")
+    @Column(name = "work_day_id", columnDefinition = "UUID")
     private UUID workDayId;
 
-    @Column(name = "tx_id", columnDefinition = "BINARY(16)")
+    @Column(name = "tx_id", columnDefinition = "UUID")
     private UUID txId;
 
     @Enumerated(EnumType.STRING)
@@ -52,20 +52,24 @@ public class PointLedgerJpaEntity {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "description")
+    private String description;
+
     @Builder
     public PointLedgerJpaEntity(UUID ledgerId, UUID crewId, UUID workDayId,
                                  UUID txId, LedgerType ledgerType, Long amount,
                                  Long remaining, LocalDateTime grantedAt,
-                                 LocalDateTime expiredAt) {
-        this.ledgerId   = ledgerId;
-        this.crewId     = crewId;
-        this.workDayId  = workDayId;
-        this.txId       = txId;
-        this.ledgerType = ledgerType;
-        this.amount     = amount;
-        this.remaining  = remaining;
-        this.grantedAt  = grantedAt;
-        this.expiredAt  = expiredAt;
+                                 LocalDateTime expiredAt, String description) {
+        this.ledgerId    = ledgerId;
+        this.crewId      = crewId;
+        this.workDayId   = workDayId;
+        this.txId        = txId;
+        this.ledgerType  = ledgerType;
+        this.amount      = amount;
+        this.remaining   = remaining;
+        this.grantedAt   = grantedAt;
+        this.expiredAt   = expiredAt;
+        this.description = description;
     }
 
     public void updateRemaining(long remaining) {

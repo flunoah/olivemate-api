@@ -34,7 +34,8 @@ public class PointMapper {
             Money.of(entity.getRemaining()),
             entity.getGrantedAt(),
             entity.getExpiredAt(),
-            entity.getCreatedAt()
+            entity.getCreatedAt(),
+            entity.getDescription()
         );
     }
 
@@ -51,6 +52,7 @@ public class PointMapper {
             .remaining(ledger.getRemaining().amount())
             .grantedAt(ledger.getGrantedAt())
             .expiredAt(ledger.getExpiredAt())
+            .description(ledger.getDescription())
             .build();
     }
 }

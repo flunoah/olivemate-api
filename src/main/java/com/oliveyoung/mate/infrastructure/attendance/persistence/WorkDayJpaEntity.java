@@ -22,10 +22,10 @@ import java.util.UUID;
 public class WorkDayJpaEntity {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID workDayId;
 
-    @Column(name = "crew_id", columnDefinition = "BINARY(16)", nullable = false)
+    @Column(name = "crew_id", columnDefinition = "UUID", nullable = false)
     private UUID crewId;
 
     @Column(name = "work_date", nullable = false)

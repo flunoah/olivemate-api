@@ -15,7 +15,7 @@ import java.util.UUID;
 public class CrewJpaEntity {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID crewId;
 
     @Column(name = "login_id", length = 50, nullable = false, unique = true)

@@ -15,10 +15,10 @@ import java.util.UUID;
 public class PointAccountJpaEntity {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID accountId;
 
-    @Column(name = "crew_id", columnDefinition = "BINARY(16)",
+    @Column(name = "crew_id", columnDefinition = "UUID",
             nullable = false, unique = true)
     private UUID crewId;
 
