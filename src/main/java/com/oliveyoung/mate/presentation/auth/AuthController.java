@@ -4,7 +4,6 @@ import com.oliveyoung.mate.application.crew.CrewService;
 import com.oliveyoung.mate.application.crew.command.LoginCommand;
 import com.oliveyoung.mate.application.crew.command.SignUpCommand;
 import com.oliveyoung.mate.application.crew.result.TokenResult;
-import com.oliveyoung.mate.presentation.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,29 +17,29 @@ public class AuthController {
     private final CrewService crewService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<TokenResult>> register(@Valid @RequestBody SignUpRequest request) {
+    public ResponseEntity<TokenResult> register(@Valid @RequestBody SignUpRequest request) {
         TokenResult result = crewService.signUp(new SignUpCommand(
             request.loginId(),
             request.password(),
             request.name(),
             request.role()
         ));
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<TokenResult>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<TokenResult> login(@Valid @RequestBody LoginRequest request) {
         TokenResult result = crewService.login(new LoginCommand(
             request.loginId(),
             request.password()
         ));
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<TokenResult>> refresh(
+    public ResponseEntity<TokenResult> refresh(
             @RequestHeader("X-Refresh-Token") String refreshToken) {
         TokenResult result = crewService.refresh(refreshToken);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(result);
     }
 }

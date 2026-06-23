@@ -50,8 +50,8 @@ class AuthControllerTest {
                     {"loginId": "2920001533209", "password": "password123"}
                     """))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.accessToken").value("access.token.value"))
-            .andExpect(jsonPath("$.data.tokenType").value("Bearer"));
+            .andExpect(jsonPath("$.accessToken").value("access.token.value"))
+            .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
     @Test
@@ -106,7 +106,7 @@ class AuthControllerTest {
                     {"loginId": "9990001111111", "password": "password123"}
                     """))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.accessToken").exists());
+            .andExpect(jsonPath("$.accessToken").exists());
     }
 
     @Test
@@ -146,7 +146,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/refresh")
                 .header("X-Refresh-Token", "valid.refresh.token"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.accessToken").value("access.token.value"));
+            .andExpect(jsonPath("$.accessToken").value("access.token.value"));
     }
 
     @Test
