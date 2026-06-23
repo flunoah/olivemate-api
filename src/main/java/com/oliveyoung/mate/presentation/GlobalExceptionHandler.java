@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -57,6 +58,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInsufficientPoint(InsufficientPointException e) {
         return ResponseEntity.status(422)
             .body(new ErrorResponse("INSUFFICIENT_POINT", e.getMessage()));
+    }
+
+    // 404
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NoResourceFoundException e) {
+        return ResponseEntity.status(404)
+            .body(new ErrorResponse("NOT_FOUND", "요청한 경로를 찾을 수 없습니다."));
     }
 
     // 500 — 예상치 못한 예외는 상세 메시지 노출 없이 로그만 기록
