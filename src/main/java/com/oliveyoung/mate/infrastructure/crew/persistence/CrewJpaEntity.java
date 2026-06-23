@@ -38,7 +38,7 @@ public class CrewJpaEntity {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    public enum Role { CREW, ADMIN }
+    public enum Role { CREW, STUDENT, TEACHER, ADMIN }
 
     @Builder
     public CrewJpaEntity(UUID crewId, String loginId, String passwordHash,

@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class Crew {
 
-    public enum Role { CREW, ADMIN }
+    public enum Role { CREW, STUDENT, TEACHER, ADMIN }
 
     private final UUID          crewId;
     private final String        loginId;
@@ -27,10 +27,10 @@ public class Crew {
         this.isActive     = isActive;
     }
 
-    public static Crew create(String loginId, String passwordHash, String name) {
+    public static Crew create(String loginId, String passwordHash, String name, Role role) {
         return new Crew(
             UUID.randomUUID(), loginId, passwordHash, name,
-            Role.CREW, LocalDateTime.now(), true
+            role, LocalDateTime.now(), true
         );
     }
 

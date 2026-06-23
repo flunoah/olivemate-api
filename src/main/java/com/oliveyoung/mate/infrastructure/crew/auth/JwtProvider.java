@@ -37,6 +37,20 @@ public class JwtProvider implements TokenProvider {
         return builder.signWith(key).compact();
     }
 
+    @Override
+    public String generateRefresh(UUID crewId, String role) {
+        long refreshExpireMs = expireMs > 0 ? expireMs * 7 : -1;
+        var builder = Jwts.builder()
+            .subject(crewId.toString())
+            .claim("role", role)
+            .claim("type", "refresh")
+            .issuedAt(new Date());
+        if (refreshExpireMs > 0) {
+            builder.expiration(new Date(System.currentTimeMillis() + refreshExpireMs));
+        }
+        return builder.signWith(key).compact();
+    }
+
     public UUID extractCrewId(String token) {
         return UUID.fromString(claims(token).getSubject());
     }
