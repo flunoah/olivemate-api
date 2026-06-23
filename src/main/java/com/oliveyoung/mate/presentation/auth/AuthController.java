@@ -20,7 +20,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<TokenResult>> register(@Valid @RequestBody SignUpRequest request) {
         TokenResult result = crewService.signUp(new SignUpCommand(
-            request.email(),
+            request.loginId(),
             request.password(),
             request.name(),
             request.role()
@@ -31,7 +31,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenResult>> login(@Valid @RequestBody LoginRequest request) {
         TokenResult result = crewService.login(new LoginCommand(
-            request.email(),
+            request.loginId(),
             request.password()
         ));
         return ResponseEntity.ok(ApiResponse.ok(result));
