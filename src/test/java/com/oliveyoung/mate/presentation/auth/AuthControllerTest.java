@@ -47,7 +47,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "user@example.com", "password": "password123"}
+                    {"loginId": "2920001533209", "password": "password123"}
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.accessToken").value("access.token.value"))
@@ -63,7 +63,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "user@example.com", "password": "wrongpassword"}
+                    {"loginId": "2920001533209", "password": "wrongpassword"}
                     """))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
@@ -75,7 +75,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "", "password": "password123"}
+                    {"loginId": "", "password": "password123"}
                     """))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
@@ -87,7 +87,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "user@example.com", "password": ""}
+                    {"loginId": "2920001533209", "password": ""}
                     """))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
@@ -103,7 +103,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "new@example.com", "password": "password123"}
+                    {"loginId": "9990001111111", "password": "password123"}
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.accessToken").exists());
@@ -118,7 +118,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "dup@example.com", "password": "password123"}
+                    {"loginId": "2920001533209", "password": "password123"}
                     """))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("CONFLICT"));
@@ -130,7 +130,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    {"email": "user@example.com", "password": "short"}
+                    {"loginId": "2920001533209", "password": "short"}
                     """))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
