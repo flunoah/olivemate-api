@@ -32,7 +32,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/week/{crewId}")
-    public ResponseEntity<List<String>> getThisWeekWorkDays(@PathVariable UUID crewId) {
+    public ResponseEntity<List<AttendanceService.WorkDayStatus>> getThisWeekWorkDays(@PathVariable UUID crewId) {
         SecurityUtils.validateSelfOrAdmin(crewId);
         return ResponseEntity.ok(attendanceService.getThisWeekWorkDays(crewId));
     }

@@ -70,13 +70,14 @@ public class AttendanceService {
 
     // ── 이번 주 근무일 조회 ────────────────────────
     @Transactional(readOnly = true)
-    public List<String> getThisWeekWorkDays(UUID crewId) {
+    public List<WorkDayStatus> getThisWeekWorkDays(UUID crewId) {
         LocalDate monday = LocalDate.now().with(DayOfWeek.MONDAY);
         LocalDate sunday = monday.plusDays(6);
         return workDayRepository.findByCrewIdAndWorkDateBetween(crewId, monday, sunday)
             .stream()
-            .filter(w -> !w.isSkipped())
-            .map(w -> w.getWorkDate().toString())
+            .map(w -> new WorkDayStatus(w.getWorkDate().toString(), w.isSkipped()))
             .toList();
     }
+
+    public record WorkDayStatus(String date, boolean skipped) {}
 }
