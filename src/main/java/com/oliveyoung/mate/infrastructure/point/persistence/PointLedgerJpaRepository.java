@@ -48,10 +48,10 @@ public interface PointLedgerJpaRepository
         SELECT COALESCE(SUM(l.amount), 0) FROM PointLedgerJpaEntity l
         WHERE l.crewId = :crewId
           AND l.ledgerType = :type
-          AND l.createdAt >= :from
-          AND l.createdAt < :to
+          AND l.grantedAt >= :from
+          AND l.grantedAt < :to
         """)
-    Long sumAmountByCrewIdAndTypeAndCreatedAtBetween(
+    Long sumAmountByCrewIdAndTypeAndGrantedAtBetween(
         @Param("crewId") UUID crewId,
         @Param("type") PointLedgerJpaEntity.LedgerType type,
         @Param("from") LocalDateTime from,

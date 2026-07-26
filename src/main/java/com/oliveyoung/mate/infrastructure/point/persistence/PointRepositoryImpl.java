@@ -86,7 +86,7 @@ public class PointRepositoryImpl implements PointRepository {
 
     @Override
     public Money sumByTypeAndPeriod(CrewId crewId, String type, LocalDateTime from, LocalDateTime to) {
-        Long sum = ledgerJpaRepo.sumAmountByCrewIdAndTypeAndCreatedAtBetween(
+        Long sum = ledgerJpaRepo.sumAmountByCrewIdAndTypeAndGrantedAtBetween(
             crewId.id(), PointLedgerJpaEntity.LedgerType.valueOf(type), from, to);
         return sum != null ? Money.of(sum) : Money.zero();
     }
