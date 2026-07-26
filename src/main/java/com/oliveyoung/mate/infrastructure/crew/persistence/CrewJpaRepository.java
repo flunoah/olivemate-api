@@ -11,4 +11,5 @@ public interface CrewJpaRepository
     Optional<CrewJpaEntity> findByLoginId(String loginId);
     boolean existsByLoginId(String loginId);
     List<CrewJpaEntity> findAllByIsActiveTrue();
+    List<CrewJpaEntity> findAllByIsActiveTrueAndRole(CrewJpaEntity.Role role);
 }

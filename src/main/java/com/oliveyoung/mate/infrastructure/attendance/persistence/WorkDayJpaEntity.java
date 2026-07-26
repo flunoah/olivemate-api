@@ -14,7 +14,8 @@ import java.util.UUID;
     uniqueConstraints = @UniqueConstraint(
         name = "uq_crew_work_date",
         columnNames = {"crew_id", "work_date"}
-    )
+    ),
+    indexes = @Index(name = "idx_workday_grant_scan", columnList = "point_granted, skipped, work_date")
 )
 @EntityListeners(AuditingEntityListener.class)
 @Getter

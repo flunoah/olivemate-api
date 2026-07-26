@@ -11,4 +11,5 @@ public interface CrewRepository {
     Optional<Crew> findById(UUID crewId);
     boolean existsByLoginId(String loginId);
     List<Crew> findAllActive();
+    List<Crew> findAllActiveByRole(Crew.Role role);
 }

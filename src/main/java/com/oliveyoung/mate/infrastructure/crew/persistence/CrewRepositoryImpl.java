@@ -50,6 +50,13 @@ public class CrewRepositoryImpl implements CrewRepository {
             .toList();
     }
 
+    @Override
+    public List<Crew> findAllActiveByRole(Crew.Role role) {
+        return crewJpaRepository.findAllByIsActiveTrueAndRole(CrewJpaEntity.Role.valueOf(role.name())).stream()
+            .map(this::toDomain)
+            .toList();
+    }
+
     private Crew toDomain(CrewJpaEntity e) {
         return Crew.of(
             e.getCrewId(), e.getLoginId(), e.getPasswordHash(),

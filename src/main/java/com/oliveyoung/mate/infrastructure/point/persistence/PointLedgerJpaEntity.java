@@ -10,7 +10,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "point_ledger", indexes = {
     @Index(name = "idx_ledger_crew_type_expired",
-           columnList = "crew_id, ledger_type, expired_at")
+           columnList = "crew_id, ledger_type, expired_at"),
+    @Index(name = "idx_ledger_crew_granted", columnList = "crew_id, granted_at"),
+    @Index(name = "idx_ledger_tx", columnList = "tx_id")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter

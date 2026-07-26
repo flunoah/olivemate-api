@@ -9,7 +9,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "crew_schedule")
+@Table(name = "crew_schedule", indexes = {
+    @Index(name = "idx_schedule_crew_active", columnList = "crew_id, is_active"),
+    @Index(name = "idx_schedule_active", columnList = "is_active")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

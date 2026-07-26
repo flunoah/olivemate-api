@@ -65,8 +65,7 @@ public class AdminController {
     @GetMapping("/crews")
     public ResponseEntity<List<CrewSummary>> getCrews() {
         SecurityUtils.validateAdmin();
-        List<CrewSummary> result = crewRepository.findAllActive().stream()
-            .filter(c -> c.getRole() == Crew.Role.CREW)
+        List<CrewSummary> result = crewRepository.findAllActiveByRole(Crew.Role.CREW).stream()
             .map(c -> new CrewSummary(c.getCrewId(), c.getName(), c.getLoginId(), c.getRole().name()))
             .toList();
         return ResponseEntity.ok(result);
