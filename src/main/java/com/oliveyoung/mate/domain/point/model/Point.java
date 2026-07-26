@@ -131,8 +131,8 @@ public class Point {
         }
 
         Money totalToRestore = useLedgers.stream()
-            .map(PointLedger::getAmount)
-            .reduce(Money.zero(), Money::add);
+            .map(l -> l.getAmount())
+            .reduce(Money.zero(), (a, b) -> a.add(b));
 
         // 차감된 EARN 원장을 FIFO 순서대로 복원
         List<PointLedger> earnTargets = ledgers.stream()
@@ -165,8 +165,8 @@ public class Point {
                       && l.getExpiredAt() != null
                       && !l.getExpiredAt().isBefore(from)
                       && l.getExpiredAt().isBefore(to))
-            .map(PointLedger::getRemaining)
-            .reduce(Money.zero(), Money::add);
+            .map(l -> l.getRemaining())
+            .reduce(Money.zero(), (a, b) -> a.add(b));
     }
 
     // ── private helpers ────────────────────────────
