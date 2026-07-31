@@ -2,6 +2,8 @@ package com.oliveyoung.mate.presentation;
 
 import com.oliveyoung.mate.domain.point.InsufficientPointException;
 import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,7 +14,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final SlackNotifier slackNotifier;
 
     // 400 — Bean Validation 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -25,14 +30,14 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse("INVALID_INPUT", message));
     }
 
-    // 400 — 잘못된 요청 (로그인 실패, 유효하지 않은 파라미터 등)
+    // 400 — 잘못된 요청
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException e) {
         return ResponseEntity.badRequest()
             .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
     }
 
-    // 409 — 상태 충돌 (중복 가입, 이미 초기화된 포인트, 중복 근무일 등)
+    // 409 — 상태 충돌
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleConflict(IllegalStateException e) {
         return ResponseEntity.status(409)
@@ -67,10 +72,13 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse("NOT_FOUND", "요청한 경로를 찾을 수 없습니다."));
     }
 
-    // 500 — 예상치 못한 예외는 상세 메시지 노출 없이 로그만 기록
+    // 500 — 슬랙 알림 추가
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneral(Exception e) {
-        log.error("Unhandled exception", e);
+    public ResponseEntity<ErrorResponse> handleGeneral(
+            Exception e,
+            HttpServletRequest request) {
+        log.error("Unhandled exception at {}", request.getRequestURI(), e);
+        slackNotifier.sendError(e, request.getRequestURI());
         return ResponseEntity.status(500)
             .body(new ErrorResponse("INTERNAL_ERROR", "서버 오류가 발생했습니다."));
     }

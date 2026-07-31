@@ -3,6 +3,7 @@ package com.oliveyoung.mate.presentation.auth;
 import com.oliveyoung.mate.application.crew.CrewService;
 import com.oliveyoung.mate.application.crew.result.TokenResult;
 import com.oliveyoung.mate.presentation.GlobalExceptionHandler;
+import com.oliveyoung.mate.presentation.SlackNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class AuthControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders
             .standaloneSetup(new AuthController(crewService))
-            .setControllerAdvice(new GlobalExceptionHandler())
+            .setControllerAdvice(new GlobalExceptionHandler(new SlackNotifier()))
             .build();
     }
 
