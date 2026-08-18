@@ -9,5 +9,5 @@ public record PointAccruedEvent(
     UUID pointId,
     BigDecimal amount,
     LocalDate workDate,     // 근무일 (전날)
-    LocalDate expireDate    // 적립일 + 21일
+    LocalDate expireDate    // 적립일 + 31일
 ) {}
