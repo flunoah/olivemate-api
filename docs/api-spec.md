@@ -302,15 +302,25 @@ const serverDayToJsDay = (d: number): number => (d === 7 ? 0 : d);
     "type": "POINT_EARNED",
     "title": "포인트가 적립됐어요 🎉",
     "body": "어제 근무하신 4,000P가 적립됐어요.",
-    "deepLink": "/points/history?date=2026-08-11",
+    "deepLink": "/history?date=2026-08-11",
     "read": false,
     "sentAt": "2026-08-11T01:00:05"
+  }, {
+    "id": "uuid",
+    "type": "POINT_EXPIRING",
+    "title": "포인트가 곧 소멸돼요 ⏰",
+    "body": "4,000P가 7일 후 소멸 예정이에요.",
+    "deepLink": "/history?date=2026-08-18",
+    "read": false,
+    "sentAt": "2026-08-11T07:00:03"
   }],
   "message": null
 }
 ```
 
-> **미사용**: 프론트에 인앱 알림 리스트 UI가 없어 현재 호출되지 않는다. Push 발송이 실패하면 사용자가 알림을 확인할 방법이 없다.
+`POINT_EXPIRING`은 매일 07:00(KST) `PointExpiryReminderScheduler`가 만료 D-7/D-3/D-1인 크루를 스캔해 발행한다 (`PointService.remindExpiringPoints()`).
+
+프론트 `app/notifications/page.tsx`가 이 엔드포인트를 호출한다. 대시보드 헤더의 종 아이콘이 안 읽은 개수를 뱃지로 보여준다.
 
 ### PATCH /api/v1/notifications/{id}/read
 

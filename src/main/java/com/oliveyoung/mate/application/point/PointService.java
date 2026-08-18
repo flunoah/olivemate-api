@@ -12,6 +12,7 @@ import com.oliveyoung.mate.application.point.result.UsePointResult;
 import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
+import com.oliveyoung.mate.domain.point.event.PointExpiringEvent;
 import com.oliveyoung.mate.domain.point.model.Point;
 import com.oliveyoung.mate.domain.point.model.PointLedger;
 import com.oliveyoung.mate.domain.point.repository.PointPolicyRepository;
@@ -234,6 +235,29 @@ public class PointService {
         });
         log.info("[Admin Cron] 처리 완료 {}건 (실패 {}건)", count[0], count[1]);
         return JobReport.of("포인트 적립", today, count[0], count[1]);
+    }
+
+    // ── 소멸 임박 알림 (D-7/D-3/D-1) ────────────────
+    public JobReport remindExpiringPoints() {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        log.info("[Admin Cron] 소멸 임박 알림 시작 {}", today);
+        int[] count = {0, 0};
+        for (int daysLeft : new int[]{7, 3, 1}) {
+            LocalDateTime from = today.plusDays(daysLeft).atStartOfDay();
+            LocalDateTime to = from.plusDays(1);
+            pointRepository.findExpiringAmountsBetween(from, to).forEach(r -> {
+                try {
+                    txTemplate.executeWithoutResult(status ->
+                        eventPublisher.publishEvent(new PointExpiringEvent(r.crewId(), r.amount(), from, daysLeft)));
+                    count[0]++;
+                } catch (Exception e) {
+                    count[1]++;
+                    log.error("[Admin Cron] 소멸 임박 알림 실패. crewId={}", r.crewId(), e);
+                }
+            });
+        }
+        log.info("[Admin Cron] 처리 완료 {}건 (실패 {}건)", count[0], count[1]);
+        return JobReport.of("소멸 임박 알림", today, count[0], count[1]);
     }
 
     public JobReport expireAllPoints() {

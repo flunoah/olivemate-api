@@ -25,4 +25,9 @@ public interface PointRepository {
 
     // 이번달 적립/사용 합산
     Money sumByTypeAndPeriod(CrewId crewId, String type, LocalDateTime from, LocalDateTime to);
+
+    // 만료 예정 알림 배치용 — 크루별 만료 예정 합계 일괄 조회
+    List<ExpiringReminder> findExpiringAmountsBetween(LocalDateTime from, LocalDateTime to);
+
+    record ExpiringReminder(CrewId crewId, Money amount) {}
 }

@@ -92,6 +92,13 @@ public class PointRepositoryImpl implements PointRepository {
     }
 
     @Override
+    public List<ExpiringReminder> findExpiringAmountsBetween(LocalDateTime from, LocalDateTime to) {
+        return ledgerJpaRepo.findExpiringAmountsBetween(EARN_TYPES, from, to).stream()
+            .map(row -> new ExpiringReminder(CrewId.of(row.getCrewId()), Money.of(row.getAmount())))
+            .toList();
+    }
+
+    @Override
     public Optional<PointLedger> findLedgerById(UUID ledgerId) {
         return ledgerJpaRepo.findById(ledgerId).map(mapper::toLedgerDomain);
     }

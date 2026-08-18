@@ -41,17 +41,30 @@ public class WebPushClient {
     }
 
     public void sendPointEarned(CrewId crewId, Money amount, LocalDate grantedAt) {
-        var subscriptions = subscriptionRepository.findByCrewId(crewId);
-        if (subscriptions.isEmpty()) {
-            return;
-        }
-
         String amountText = "%,d".formatted(amount.amount());
         String payload = """
             {"title":"포인트가 적립됐어요 🎉",
              "body":"어제 근무하신 %sP가 적립됐어요.",
-             "deepLink":"/points/history?date=%s"}
+             "deepLink":"/history?date=%s"}
             """.formatted(amountText, grantedAt);
+        sendToSubscriptions(crewId, payload);
+    }
+
+    public void sendPointExpiring(CrewId crewId, Money amount, LocalDate expiryDate, int daysLeft) {
+        String amountText = "%,d".formatted(amount.amount());
+        String payload = """
+            {"title":"포인트가 곧 소멸돼요 ⏰",
+             "body":"%sP가 %d일 후 소멸 예정이에요.",
+             "deepLink":"/history?date=%s"}
+            """.formatted(amountText, daysLeft, expiryDate);
+        sendToSubscriptions(crewId, payload);
+    }
+
+    private void sendToSubscriptions(CrewId crewId, String payload) {
+        var subscriptions = subscriptionRepository.findByCrewId(crewId);
+        if (subscriptions.isEmpty()) {
+            return;
+        }
 
         for (var sub : subscriptions) {
             try {

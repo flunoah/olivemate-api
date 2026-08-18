@@ -225,7 +225,7 @@ ORDER BY COALESCE(expired_at, '9999-12-31')  -- 만료일 없는 건 맨 뒤로
 | `type` | varchar(50) | NOT NULL | `POINT_EARNED` / `POINT_EXPIRING` |
 | `title` | varchar(200) | NOT NULL | |
 | `body` | varchar(500) | NOT NULL | |
-| `deep_link` | varchar(500) | NULL 허용 | 예: `/points/history?date=2026-08-11` |
+| `deep_link` | varchar(500) | NULL 허용 | 예: `/history?date=2026-08-11` |
 | `read` | boolean | NOT NULL, 기본 `false` | |
 | `sent_at` | timestamp | NOT NULL | |
 

@@ -38,7 +38,21 @@ public class Notification {
             NotificationType.POINT_EARNED,
             "포인트가 적립됐어요 🎉",
             "어제 근무하신 " + amountText + "P가 적립됐어요.",
-            "/points/history?date=" + grantedAt,
+            "/history?date=" + grantedAt,
+            false,
+            LocalDateTime.now()
+        );
+    }
+
+    public static Notification pointExpiring(CrewId crewId, Money amount, LocalDate expiryDate, int daysLeft) {
+        String amountText = "%,d".formatted(amount.amount());
+        return new Notification(
+            UUID.randomUUID(),
+            crewId,
+            NotificationType.POINT_EXPIRING,
+            "포인트가 곧 소멸돼요 ⏰",
+            amountText + "P가 " + daysLeft + "일 후 소멸 예정이에요.",
+            "/history?date=" + expiryDate,
             false,
             LocalDateTime.now()
         );

@@ -5,7 +5,9 @@ import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.point.repository.PointPolicyRepository;
 import com.oliveyoung.mate.domain.point.repository.PointRepository;
+import com.oliveyoung.mate.domain.point.repository.PointRepository.ExpiringReminder;
 import com.oliveyoung.mate.domain.point.vo.CrewId;
+import com.oliveyoung.mate.domain.point.vo.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -131,5 +133,32 @@ class PointServiceBatchTest {
         assertThat(report.success()).isZero();
         assertThat(report.failed()).isZero();
         verify(txManager, never()).getTransaction(any());
+    }
+
+    @Test
+    @DisplayName("소멸 임박 대상이 없으면 트랜잭션을 열지 않고 0건 리포트를 낸다")
+    void remind_expiring_points_opens_no_transaction_when_empty() {
+        when(pointRepository.findExpiringAmountsBetween(any(), any())).thenReturn(List.of());
+
+        JobReport report = pointService.remindExpiringPoints();
+
+        assertThat(report.success()).isZero();
+        assertThat(report.failed()).isZero();
+        verify(txManager, never()).getTransaction(any());
+    }
+
+    @Test
+    @DisplayName("D-7/D-3/D-1 세 창(window) 각각 대상 크루마다 트랜잭션을 열어 이벤트를 발행한다")
+    void remind_expiring_points_opens_one_transaction_per_target_per_window() {
+        ExpiringReminder reminder = new ExpiringReminder(CrewId.of(UUID.randomUUID()), Money.of(4000));
+        when(pointRepository.findExpiringAmountsBetween(any(), any())).thenReturn(List.of(reminder));
+
+        JobReport report = pointService.remindExpiringPoints();
+
+        // D-7, D-3, D-1 세 창 모두 같은 mock 결과를 반환하므로 3건
+        assertThat(report.success()).isEqualTo(3);
+        assertThat(report.failed()).isZero();
+        verify(txManager, times(3)).getTransaction(any());
+        verify(txManager, times(3)).commit(any(TransactionStatus.class));
     }
 }
