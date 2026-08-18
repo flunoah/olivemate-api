@@ -11,7 +11,7 @@ public class PointPolicyRepositoryImpl implements PointPolicyRepository {
 
     @Override
     public Optional<PointPolicy> findActivePolicy() {
-        // 현재는 기본 정책 반환 (4000원, 1일 후 지급, 30일 만료)
+        // 현재는 기본 정책 반환 (4000원, 1일 후 지급, 31일 만료)
         return Optional.of(PointPolicy.defaultPolicy());
     }
 

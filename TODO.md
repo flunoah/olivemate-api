@@ -1,0 +1,47 @@
+# TODO
+
+> 상세 배경은 `docs/architecture.md`, `docs/api-spec.md`, `mate-front/docs/frontend-architecture.md` 참고
+
+## 🔴 High — 실사용자에게 영향 있음
+
+(모두 처리 완료 — 아래 Done 참고)
+
+## 🟡 Medium
+
+- [ ] `[BE]` `UsePointResult`에 `txId` 추가 → 프론트 되돌리기 UI 활성화
+- [ ] `[FE]` 되돌리기 UI 동작 확인 (위 작업 후)
+- [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
+- [ ] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`)
+- [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
+- [ ] `[BE]` `notification`/`push_subscription` 테이블명 단수형 통일 검토
+- [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
+
+## 🟢 Low
+
+- [ ] `[BE]` FIFO 로직 단위 테스트 (`Point.use()`, `cancelUse()`, `expireOld()`)
+- [ ] `[FE]` 공통 컴포넌트 추출 (`Toast`, `Card`, `Button`)
+- [ ] `[FE]` 컬러 토큰 상수화
+- [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
+- [ ] `[BE]` 응답 포맷 통일 (`ApiResponse` 래핑 여부)
+- [ ] `[FE]` ESLint 도입 (`lint` 스크립트 부재)
+- [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요) + `npm run build`(프론트)
+
+## 📦 Backlog — 신규 기능
+
+- [ ] 제품명 자동완성/추천 (LLM)
+- [ ] 버그 제보 LLM triage
+
+## ✅ Done
+
+- [x] 소멸 임박 알림 (D-7/D-3/D-1) — `PointExpiryReminderScheduler`(매일 07:00 KST) → `PointService.remindExpiringPoints()` → `PointExpiringEvent` → `PointExpiringNotificationListener`(기존 `PointEarnedNotificationListener`와 동일 패턴)가 인앱 알림 저장 + 웹푸시 발송. 겸사겸사 `Notification.pointEarned()`/`WebPushClient`의 잘못된 deepLink(`/points/history` → `/history`, 존재하지 않는 라우트였음)도 수정
+- [x] 인앱 알림 리스트 UI — `app/notifications/page.tsx` 신규, 대시보드 헤더 종 아이콘(안 읽음 뱃지 포함)에서 진입
+- [x] `[BE]` `WebPushClient`의 `catch (Exception)` 세분화. `HttpResponse` 상태 코드(404/410)로만 구독 삭제, 그 외 일시적 오류(`IOException`/`ExecutionException`/`InterruptedException`)·설정 오류(`GeneralSecurityException`/`JoseException`)는 로그만 남기고 구독 유지
+- [x] `[FE]` `next.config.ts` rewrites를 `/api/v1/:path*`로 좁힘. `/api/bugs`가 로컬 Route Handler로 정상 라우팅됨
+- [x] `[FE]` 사용 취소 중복 호출 제거. `history` 모달 "취소하기" 버튼에 `cancelLoading` 가드 연결, `dashboard` undo 버튼에 `undoLoading` state 신규 추가
+- [x] `[FE]` `proxy.ts` → `middleware.ts` 항목 재확인 결과 **오진단으로 판명**. 이 저장소의 Next.js 16.2.6부터는 `middleware`가 deprecated이고 `proxy.ts`/`export function proxy`가 현재 컨벤션(빌드 로그 "ƒ Proxy (Middleware)"로 정상 인식 확인). 라우트 가드 자체는 정상 작동 중이므로 리네임 불필요 — 만약 실사용자가 가드 미작동을 여전히 겪는다면 다른 원인(예: `middleware`/`proxy` 컨벤션 문제가 아님)을 재조사할 것
+- [x] `[BE]` Web Push 알림 기능 (Domain → Infra → API → 프론트 연동)
+- [x] `[BE]` `grantPointsForAll()` self-invocation 트랜잭션 수정 (이중 지급 방지)
+- [x] `[BE]` `@EnableAsync` + `AsyncConfig` 추가
+- [x] `[BE]` Push 구독 API 멱등성 확보
+- [x] `docs/` 4종 작성 (architecture, db-schema, api-spec, frontend-architecture)
+- [x] CI (GitHub Actions: `./gradlew compileJava`, main push/PR 트리거)

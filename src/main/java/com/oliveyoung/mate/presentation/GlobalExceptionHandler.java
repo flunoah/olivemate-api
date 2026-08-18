@@ -5,6 +5,7 @@ import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,7 +18,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    private final SlackNotifier slackNotifier;
+    private final TelegramNotifier telegramNotifier;
 
     // 400 — Bean Validation 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -72,13 +73,21 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse("NOT_FOUND", "요청한 경로를 찾을 수 없습니다."));
     }
 
-    // 500 — 슬랙 알림 추가
+    // 409 — DB 유니크 제약 위반 등 (정상적인 재시도 상황일 수 있어 슬랙 알림은 보내지 않음)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        log.warn("Data integrity violation: {}", e.getMessage());
+        return ResponseEntity.status(409)
+            .body(new ErrorResponse("CONFLICT", "이미 처리된 요청입니다."));
+    }
+
+    // 500 — 텔레그램 알림 추가
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(
             Exception e,
             HttpServletRequest request) {
         log.error("Unhandled exception at {}", request.getRequestURI(), e);
-        slackNotifier.sendError(e, request.getRequestURI());
+        telegramNotifier.sendError(e, request.getRequestURI());
         return ResponseEntity.status(500)
             .body(new ErrorResponse("INTERNAL_ERROR", "서버 오류가 발생했습니다."));
     }

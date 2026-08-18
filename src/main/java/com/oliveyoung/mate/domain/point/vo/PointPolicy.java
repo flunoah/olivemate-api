@@ -6,6 +6,6 @@ public record PointPolicy(
     int  expiryDays
 ) {
     public static PointPolicy defaultPolicy() {
-        return new PointPolicy(4_000L, 1, 30);
+        return new PointPolicy(4_000L, 1, 31);
     }
 }

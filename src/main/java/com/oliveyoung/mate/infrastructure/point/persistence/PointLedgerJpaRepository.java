@@ -69,4 +69,23 @@ public interface PointLedgerJpaRepository
            AND expired_at IS NULL
         """, nativeQuery = true)
     int backfillInitExpiredAt();
+
+    @Query("""
+        SELECT l.crewId AS crewId, COALESCE(SUM(l.remaining), 0) AS amount
+        FROM PointLedgerJpaEntity l
+        WHERE l.ledgerType IN :types
+          AND l.remaining > 0
+          AND l.expiredAt >= :from
+          AND l.expiredAt < :to
+        GROUP BY l.crewId
+        """)
+    List<ExpiringAmountRow> findExpiringAmountsBetween(
+        @Param("types") Collection<PointLedgerJpaEntity.LedgerType> types,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
+    interface ExpiringAmountRow {
+        UUID getCrewId();
+        Long getAmount();
+    }
 }
