@@ -1,5 +1,6 @@
 package com.oliveyoung.mate.application.point;
 
+import com.oliveyoung.mate.application.JobReport;
 import com.oliveyoung.mate.application.point.command.CancelUseCommand;
 import com.oliveyoung.mate.application.point.command.EarnPointCommand;
 import com.oliveyoung.mate.application.point.command.GrantPointManualCommand;
@@ -24,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,6 +42,12 @@ public class PointService {
     private final PointPolicyRepository     policyRepository;
     private final WorkDayRepository         workDayRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * 일괄 처리는 항목별로 트랜잭션을 직접 연다.
+     * earn()/expirePoints()의 @Transactional은 자기 호출이라 프록시를 타지 않아 적용되지 않는다.
+     */
+    private final TransactionTemplate       txTemplate;
 
     // ── 포인트 적립 ────────────────────────────────
     @Transactional
@@ -206,36 +214,43 @@ public class PointService {
     }
 
     // ── Cron/Admin 일괄 처리 ──────────────────────
-    public void grantPointsForAll() {
-        log.info("[Admin Cron] 포인트 적립 시작 {}", LocalDate.now());
-        int[] count = {0};
-        workDayRepository.findAllNotGranted(LocalDate.now(ZoneId.of("Asia/Seoul"))).forEach(workDay -> {
+    public JobReport grantPointsForAll() {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        log.info("[Admin Cron] 포인트 적립 시작 {}", today);
+        int[] count = {0, 0};
+        workDayRepository.findAllNotGranted(today).forEach(workDay -> {
             try {
-                earn(new EarnPointCommand(
+                EarnPointCommand cmd = new EarnPointCommand(
                     workDay.getCrewId(),
                     workDay.getWorkDayId(),
                     workDay.getWorkDate()
-                ));
+                );
+                txTemplate.executeWithoutResult(status -> earn(cmd));
                 count[0]++;
             } catch (Exception e) {
+                count[1]++;
                 log.error("[Admin Cron] 포인트 지급 실패. crewId={}", workDay.getCrewId(), e);
             }
         });
-        log.info("[Admin Cron] 처리 완료 {}건", count[0]);
+        log.info("[Admin Cron] 처리 완료 {}건 (실패 {}건)", count[0], count[1]);
+        return JobReport.of("포인트 적립", today, count[0], count[1]);
     }
 
-    public void expireAllPoints() {
-        log.info("[Admin Cron] 포인트 만료 처리 시작 {}", LocalDate.now());
-        int[] count = {0};
+    public JobReport expireAllPoints() {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        log.info("[Admin Cron] 포인트 만료 처리 시작 {}", today);
+        int[] count = {0, 0};
         pointRepository.findAllCrewIdsWithExpiringPoints().forEach(crewId -> {
             try {
-                expirePoints(crewId.id());
+                txTemplate.executeWithoutResult(status -> expirePoints(crewId.id()));
                 count[0]++;
             } catch (Exception e) {
+                count[1]++;
                 log.error("[Admin Cron] 만료 처리 실패. crewId={}", crewId.id(), e);
             }
         });
-        log.info("[Admin Cron] 처리 완료 {}건", count[0]);
+        log.info("[Admin Cron] 처리 완료 {}건 (실패 {}건)", count[0], count[1]);
+        return JobReport.of("포인트 만료", today, count[0], count[1]);
     }
 
     // ── private helpers ────────────────────────────

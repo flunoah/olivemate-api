@@ -1,0 +1,49 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT 서명에 사용되는 시크릿 키"
+    },
+    {
+      "name": "jwt.expire-ms",
+      "type": "java.lang.Long",
+      "description": "JWT 만료 시간(ms)"
+    },
+    {
+      "name": "admin.secret.key",
+      "type": "java.lang.String",
+      "description": "X-Admin-Key 헤더 검증용 관리자 시크릿"
+    },
+    {
+      "name": "telegram.bot-token",
+      "type": "java.lang.String",
+      "description": "텔레그램 알림 봇 토큰"
+    },
+    {
+      "name": "telegram.chat-id",
+      "type": "java.lang.String",
+      "description": "텔레그램 알림을 받을 채팅방 ID"
+    },
+    {
+      "name": "anthropic.api.key",
+      "type": "java.lang.String",
+      "description": "Anthropic API 키"
+    },
+    {
+      "name": "push.vapid.public-key",
+      "type": "java.lang.String",
+      "description": "Web Push VAPID 공개키"
+    },
+    {
+      "name": "push.vapid.private-key",
+      "type": "java.lang.String",
+      "description": "Web Push VAPID 개인키"
+    },
+    {
+      "name": "push.vapid.subject",
+      "type": "java.lang.String",
+      "description": "Web Push VAPID subject (mailto: 형식)"
+    }
+  ]
+}
