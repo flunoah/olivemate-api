@@ -4,10 +4,7 @@
 
 ## 🔴 High — 실사용자에게 영향 있음
 
-- [ ] `[FE]` `proxy.ts` → `middleware.ts` 리네임 + 함수명 변경. 현재 라우트 가드 미작동
-- [ ] `[FE]` `next.config.ts` rewrites를 `/api/v1/:path*`로 좁히기. `/api/bugs`가 백엔드로 넘어가 404
-- [ ] `[FE]` 사용 취소 중복 호출 제거. 백엔드는 `txId` 단위 처리라 2번째부터 400 → "취소 시간 지남"으로 오표시
-- [ ] `[BE]` `WebPushClient`의 `catch (Exception)` 세분화. 일시적 오류에도 구독을 영구 삭제 중
+(모두 처리 완료 — 아래 Done 참고)
 
 ## 🟡 Medium
 
@@ -38,6 +35,10 @@
 
 ## ✅ Done
 
+- [x] `[BE]` `WebPushClient`의 `catch (Exception)` 세분화. `HttpResponse` 상태 코드(404/410)로만 구독 삭제, 그 외 일시적 오류(`IOException`/`ExecutionException`/`InterruptedException`)·설정 오류(`GeneralSecurityException`/`JoseException`)는 로그만 남기고 구독 유지
+- [x] `[FE]` `next.config.ts` rewrites를 `/api/v1/:path*`로 좁힘. `/api/bugs`가 로컬 Route Handler로 정상 라우팅됨
+- [x] `[FE]` 사용 취소 중복 호출 제거. `history` 모달 "취소하기" 버튼에 `cancelLoading` 가드 연결, `dashboard` undo 버튼에 `undoLoading` state 신규 추가
+- [x] `[FE]` `proxy.ts` → `middleware.ts` 항목 재확인 결과 **오진단으로 판명**. 이 저장소의 Next.js 16.2.6부터는 `middleware`가 deprecated이고 `proxy.ts`/`export function proxy`가 현재 컨벤션(빌드 로그 "ƒ Proxy (Middleware)"로 정상 인식 확인). 라우트 가드 자체는 정상 작동 중이므로 리네임 불필요 — 만약 실사용자가 가드 미작동을 여전히 겪는다면 다른 원인(예: `middleware`/`proxy` 컨벤션 문제가 아님)을 재조사할 것
 - [x] `[BE]` Web Push 알림 기능 (Domain → Infra → API → 프론트 연동)
 - [x] `[BE]` `grantPointsForAll()` self-invocation 트랜잭션 수정 (이중 지급 방지)
 - [x] `[BE]` `@EnableAsync` + `AsyncConfig` 추가
