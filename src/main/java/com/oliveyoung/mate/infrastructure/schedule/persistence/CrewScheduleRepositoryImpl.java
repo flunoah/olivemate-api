@@ -4,7 +4,9 @@ import com.oliveyoung.mate.domain.schedule.model.CrewSchedule;
 import com.oliveyoung.mate.domain.schedule.repository.CrewScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +44,14 @@ public class CrewScheduleRepositoryImpl implements CrewScheduleRepository {
     }
 
     @Override
-    public List<CrewSchedule> findAllActive() {
-        return jpaRepository.findAllByIsActiveTrue().stream()
+    public List<CrewSchedule> findAllEffectiveOn(LocalDate date) {
+        return jpaRepository.findAllEffectiveCandidates(date).stream()
+            .collect(Collectors.groupingBy(CrewScheduleJpaEntity::getCrewId))
+            .values().stream()
+            .map(candidates -> candidates.stream()
+                .max(Comparator.comparing(CrewScheduleJpaEntity::getStartDate)
+                    .thenComparing(CrewScheduleJpaEntity::getCreatedAt))
+                .orElseThrow())
             .map(this::toDomain)
             .toList();
     }

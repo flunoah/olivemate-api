@@ -10,18 +10,18 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class WeeklyWorkDayScheduler {
+public class DailyWorkDayScheduler {
 
     private final ScheduleService scheduleService;
     private final TelegramNotifier telegramNotifier;
 
-    @Scheduled(cron = "0 0 23 * * SUN", zone = "Asia/Seoul")
-    public void generateWeeklyWorkDays() {
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
+    public void generateDailyWorkDays() {
         try {
-            telegramNotifier.sendJobReport(scheduleService.generateNextWeekWorkDays());
+            telegramNotifier.sendJobReport(scheduleService.generateTodayWorkDays());
         } catch (Exception e) {
-            log.error("[Admin Cron] 주간 근무일 생성 스케줄러 실패", e);
-            telegramNotifier.sendSchedulerError("주간 근무일 생성 (WeeklyWorkDayScheduler)", e);
+            log.error("[Daily Cron] 일일 근무일 생성 스케줄러 실패", e);
+            telegramNotifier.sendSchedulerError("일일 근무일 생성 (DailyWorkDayScheduler)", e);
         }
     }
 }

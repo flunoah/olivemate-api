@@ -274,6 +274,8 @@ const serverDayToJsDay = (d: number): number => (d === 7 ? 0 : d);
 
 기존 스케줄은 비활성화되고 새 행이 추가되는 **이력형** 구조.
 
+**저장 시 오늘 근무일 즉시 동기화**: 스케줄 저장 직후, 오늘 날짜가 새 요일 패턴 및 시작일/종료일 범위에 매칭되면 근무일(`WorkDay`)이 즉시 생성된다. 더 이상 매칭되지 않는데 이미 만들어져 있던(아직 근무 전) 오늘의 `WorkDay`는 자동 취소된다. 오늘 이전 날짜는 손대지 않는다. 내일 이후 날짜는 매일 00:05 KST에 도는 배치(`DailyWorkDayScheduler`)가 그날의 활성 스케줄과 대조해 생성하므로, 스케줄을 미리 바꿔두면 적용일 새벽에 자동 반영된다. 이미 결근 처리된 날짜는 재등록되지 않는다.
+
 ### GET /api/v1/schedule/me/{crewId}
 
 **응답** `200` — `ScheduleResult`
@@ -370,7 +372,7 @@ const serverDayToJsDay = (d: number): number => (d === 7 ? 0 : d);
 |---|---|---|
 | POST | `/api/v1/admin/grant-points-all` | 미지급 근무일 일괄 적립 |
 | POST | `/api/v1/admin/expire-points-all` | 만료 도래 포인트 일괄 소멸 |
-| POST | `/api/v1/admin/generate-workdays` | 다음 주 근무일 자동 생성 |
+| POST | `/api/v1/admin/generate-workdays` | 오늘 근무일 자동 생성 |
 
 **헤더**: `X-Admin-Key: {ADMIN_SECRET_KEY}`
 **응답** `200` — 평문 완료 메시지 / `403` — `"Forbidden"` (평문, `ErrorResponse` 형태 아님)

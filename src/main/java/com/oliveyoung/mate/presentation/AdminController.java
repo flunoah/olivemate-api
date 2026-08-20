@@ -56,7 +56,7 @@ public class AdminController {
     public ResponseEntity<String> generateWorkdays(
             @RequestHeader(value = "X-Admin-Key", required = false) String adminKey) {
         if (isUnauthorized(adminKey)) return ResponseEntity.status(403).body("Forbidden");
-        scheduleService.generateNextWeekWorkDays();
+        scheduleService.generateTodayWorkDays();
         return ResponseEntity.ok("근무일 생성 완료");
     }
 
