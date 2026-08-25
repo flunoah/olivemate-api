@@ -62,6 +62,11 @@ public class PointRepositoryImpl implements PointRepository {
     private static final Set<PointLedgerJpaEntity.LedgerType> EARN_TYPES =
         Set.of(PointLedgerJpaEntity.LedgerType.EARN, PointLedgerJpaEntity.LedgerType.INIT);
 
+    // findBalanceAggregates()의 네이티브 쿼리에 넘길 문자열 — 리터럴을 SQL에 직접 박지 않고
+    // enum에서 파생시켜, enum 리네임 시 여기서 컴파일 에러로 걸리게 한다
+    private static final List<String> EARN_TYPE_NAMES =
+        EARN_TYPES.stream().map(Enum::name).toList();
+
     @Override
     public List<CrewId> findAllCrewIdsWithExpiringPoints() {
         return ledgerJpaRepo
@@ -82,6 +87,9 @@ public class PointRepositoryImpl implements PointRepository {
                                                     LocalDateTime monthStart, LocalDateTime monthEnd) {
         PointLedgerJpaRepository.BalanceAggregateRow row = ledgerJpaRepo.findBalanceAggregates(
             crewId.id(),
+            EARN_TYPE_NAMES,
+            PointLedgerJpaEntity.LedgerType.EARN.name(),
+            PointLedgerJpaEntity.LedgerType.USE.name(),
             now,
             now.plusDays(7),
             now.plusDays(30),

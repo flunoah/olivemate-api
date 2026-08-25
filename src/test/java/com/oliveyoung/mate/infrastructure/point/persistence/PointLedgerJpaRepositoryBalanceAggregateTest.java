@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static com.oliveyoung.mate.infrastructure.point.persistence.PointLedgerJpaEntity.LedgerType.EARN;
@@ -39,10 +40,11 @@ class PointLedgerJpaRepositoryBalanceAggregateTest {
     private static final LocalDateTime MONTH_END    = LocalDateTime.of(2026, 9, 1, 0, 0);
     private static final LocalDateTime IN_7_DAYS    = NOW.plusDays(7);
     private static final LocalDateTime IN_30_DAYS   = NOW.plusDays(30);
+    private static final List<String> EARN_TYPE_NAMES = List.of(EARN.name(), INIT.name());
 
     private PointLedgerJpaRepository.BalanceAggregateRow aggregate(UUID crewId) {
         return repository.findBalanceAggregates(
-            crewId, NOW, IN_7_DAYS, IN_30_DAYS, MONTH_START, MONTH_END);
+            crewId, EARN_TYPE_NAMES, EARN.name(), USE.name(), NOW, IN_7_DAYS, IN_30_DAYS, MONTH_START, MONTH_END);
     }
 
     private PointLedgerJpaEntity ledger(UUID crewId, PointLedgerJpaEntity.LedgerType type,
