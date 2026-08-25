@@ -29,33 +29,47 @@ public interface PointLedgerJpaRepository
     @Query("UPDATE PointLedgerJpaEntity l SET l.remaining = :remaining WHERE l.ledgerId = :ledgerId")
     void updateRemaining(@Param("ledgerId") UUID ledgerId, @Param("remaining") Long remaining);
 
-    @Query("""
-        SELECT COALESCE(SUM(l.remaining), 0) FROM PointLedgerJpaEntity l
-        WHERE l.crewId = :crewId
-          AND l.ledgerType IN :types
-          AND l.remaining > 0
-          AND l.expiredAt IS NOT NULL
-          AND l.expiredAt >= :from
-          AND l.expiredAt < :to
-        """)
-    Long sumRemainingByCrewIdAndExpiredAtBetween(
+    // 잔액 조회(PointService.getBalance())에 필요한 5개 통계를 한 번의 왕복으로 집계.
+    // CASE WHEN 하나로 합치면 크루의 원장 전체를 풀스캔하게 되어 기존 인덱스
+    // (idx_ledger_crew_type_expired / idx_ledger_crew_granted)를 못 타므로, 대신
+    // 서브쿼리 5개로 쪼갠다 — 각 서브쿼리는 예전 개별 쿼리와 동일한 WHERE 조건이라
+    // 인덱스를 그대로 타면서, 왕복은 SELECT 한 번(서브쿼리 5개가 서버 안에서 처리)으로 끝난다.
+    // remaining(잔여 차감가능액)과 amount(원거래액)를 섞지 않도록 expiring 계열은
+    // remaining을, monthly 계열은 amount를 쓰고, expired_at 기준(expiring)과
+    // granted_at 기준(monthly)도 서로 다른 컬럼임을 서브쿼리마다 명시한다.
+    @Query(value = """
+        SELECT
+            COALESCE((SELECT SUM(remaining) FROM point_ledger
+                      WHERE crew_id = :crewId AND ledger_type IN ('EARN','INIT') AND remaining > 0
+                        AND expired_at IS NOT NULL AND expired_at >= :now AND expired_at < :in7Days), 0) AS "expiringIn7Days",
+            COALESCE((SELECT SUM(remaining) FROM point_ledger
+                      WHERE crew_id = :crewId AND ledger_type IN ('EARN','INIT') AND remaining > 0
+                        AND expired_at IS NOT NULL AND expired_at >= :now AND expired_at < :in30Days), 0) AS "expiringIn30Days",
+            COALESCE((SELECT SUM(amount) FROM point_ledger
+                      WHERE crew_id = :crewId AND ledger_type = 'EARN'
+                        AND granted_at >= :monthStart AND granted_at < :monthEnd), 0) AS "monthlyEarned",
+            COALESCE((SELECT SUM(amount) FROM point_ledger
+                      WHERE crew_id = :crewId AND ledger_type = 'USE'
+                        AND granted_at >= :monthStart AND granted_at < :monthEnd), 0) AS "monthlyUsed",
+            COALESCE((SELECT SUM(remaining) FROM point_ledger
+                      WHERE crew_id = :crewId AND ledger_type IN ('EARN','INIT') AND remaining > 0
+                        AND expired_at IS NOT NULL AND expired_at >= :now AND expired_at < :monthEnd), 0) AS "monthlyExpiring"
+        """, nativeQuery = true)
+    BalanceAggregateRow findBalanceAggregates(
         @Param("crewId") UUID crewId,
-        @Param("types") Collection<PointLedgerJpaEntity.LedgerType> types,
-        @Param("from") LocalDateTime from,
-        @Param("to") LocalDateTime to);
+        @Param("now") LocalDateTime now,
+        @Param("in7Days") LocalDateTime in7Days,
+        @Param("in30Days") LocalDateTime in30Days,
+        @Param("monthStart") LocalDateTime monthStart,
+        @Param("monthEnd") LocalDateTime monthEnd);
 
-    @Query("""
-        SELECT COALESCE(SUM(l.amount), 0) FROM PointLedgerJpaEntity l
-        WHERE l.crewId = :crewId
-          AND l.ledgerType = :type
-          AND l.grantedAt >= :from
-          AND l.grantedAt < :to
-        """)
-    Long sumAmountByCrewIdAndTypeAndGrantedAtBetween(
-        @Param("crewId") UUID crewId,
-        @Param("type") PointLedgerJpaEntity.LedgerType type,
-        @Param("from") LocalDateTime from,
-        @Param("to") LocalDateTime to);
+    interface BalanceAggregateRow {
+        Long getExpiringIn7Days();
+        Long getExpiringIn30Days();
+        Long getMonthlyEarned();
+        Long getMonthlyUsed();
+        Long getMonthlyExpiring();
+    }
 
     @Modifying
     @Query("DELETE FROM PointLedgerJpaEntity l WHERE l.txId = :txId")

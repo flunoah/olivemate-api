@@ -17,6 +17,7 @@
 - [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
 - [ ] `[문서]` 루트 `CLAUDE.md`가 참조하는 `docs/db-schema.md`가 실제로는 없고, 스키마 문서는 `src/main/resources/db/migration/CLAUDE.md`에 있음 — 참조 경로 정리 필요
 - [ ] `[FE]` 대시보드 상품 자동완성이 401(토큰 만료) 시 조용히 실패함 — `authFetch`가 refresh까지 실패해도 자동완성 코드는 `if (!res.ok) return;`로 끝내버려 사용자는 "자동완성이 안 된다"고만 느끼고 로그인 문제인지 알 방법이 없음. 재현: 만료/무효 토큰 상태로 대시보드에서 제품명 입력
+- [ ] `[BE]` `PointLedgerJpaRepository.findBalanceAggregates()`가 네이티브 SQL이라 `LedgerType`(`'EARN'`/`'INIT'`/`'USE'`) 값과 `point_ledger` 테이블/컬럼명이 문자열로 하드코딩됨 — enum 리네임이나 컬럼명 마이그레이션 시 컴파일러가 못 잡고 조용히 깨짐(enum 리네임은 0 반환, 컬럼명 변경은 호출 시점 500). 해당 enum/컬럼 리팩터링 시 이 쿼리 같이 확인할 것
 
 ## 🟢 Low
 

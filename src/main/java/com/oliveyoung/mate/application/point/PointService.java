@@ -110,19 +110,16 @@ public class PointService {
         LocalDateTime monthStart = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
         LocalDateTime monthEnd   = monthStart.plusMonths(1);
 
-        Money expiringIn7Days  = pointRepository.sumExpiringBetween(cid, now, now.plusDays(7));
-        Money expiringIn30Days = pointRepository.sumExpiringBetween(cid, now, now.plusDays(30));
-        Money monthlyEarned    = pointRepository.sumByTypeAndPeriod(cid, "EARN", monthStart, monthEnd);
-        Money monthlyUsed      = pointRepository.sumByTypeAndPeriod(cid, "USE", monthStart, monthEnd);
-        Money monthlyExpiring  = pointRepository.sumExpiringBetween(cid, now, monthEnd);
+        PointRepository.BalanceAggregates agg =
+            pointRepository.findBalanceAggregates(cid, now, monthStart, monthEnd);
 
         return new PointBalanceResult(
             balance.amount(),
-            expiringIn7Days.amount(),
-            expiringIn30Days.amount(),
-            monthlyEarned.amount(),
-            monthlyUsed.amount(),
-            monthlyExpiring.amount()
+            agg.expiringIn7Days().amount(),
+            agg.expiringIn30Days().amount(),
+            agg.monthlyEarned().amount(),
+            agg.monthlyUsed().amount(),
+            agg.monthlyExpiring().amount()
         );
     }
 

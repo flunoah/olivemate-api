@@ -78,17 +78,23 @@ public class PointRepositoryImpl implements PointRepository {
     }
 
     @Override
-    public Money sumExpiringBetween(CrewId crewId, LocalDateTime from, LocalDateTime to) {
-        Long sum = ledgerJpaRepo.sumRemainingByCrewIdAndExpiredAtBetween(
-            crewId.id(), EARN_TYPES, from, to);
-        return sum != null ? Money.of(sum) : Money.zero();
-    }
-
-    @Override
-    public Money sumByTypeAndPeriod(CrewId crewId, String type, LocalDateTime from, LocalDateTime to) {
-        Long sum = ledgerJpaRepo.sumAmountByCrewIdAndTypeAndGrantedAtBetween(
-            crewId.id(), PointLedgerJpaEntity.LedgerType.valueOf(type), from, to);
-        return sum != null ? Money.of(sum) : Money.zero();
+    public BalanceAggregates findBalanceAggregates(CrewId crewId, LocalDateTime now,
+                                                    LocalDateTime monthStart, LocalDateTime monthEnd) {
+        PointLedgerJpaRepository.BalanceAggregateRow row = ledgerJpaRepo.findBalanceAggregates(
+            crewId.id(),
+            now,
+            now.plusDays(7),
+            now.plusDays(30),
+            monthStart,
+            monthEnd
+        );
+        return new BalanceAggregates(
+            Money.of(row.getExpiringIn7Days()),
+            Money.of(row.getExpiringIn30Days()),
+            Money.of(row.getMonthlyEarned()),
+            Money.of(row.getMonthlyUsed()),
+            Money.of(row.getMonthlyExpiring())
+        );
     }
 
     @Override
