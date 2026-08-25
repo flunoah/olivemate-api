@@ -87,7 +87,7 @@ public class PointService {
         LocalDateTime usedAt = cmd.usedAt() != null
             ? cmd.usedAt().atStartOfDay(ZoneId.of("Asia/Seoul")).toLocalDateTime()
             : LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-        point.use(requestAmount, txId, usedAt, cmd.description());
+        point.use(requestAmount, txId, usedAt, cmd.description(), cmd.brand());
 
         pointRepository.save(point);
         publishEvents(point);
@@ -141,7 +141,8 @@ public class PointService {
                 l.getGrantedAt(),
                 l.getExpiredAt(),
                 l.getCreatedAt(),
-                l.getDescription()
+                l.getDescription(),
+                l.getBrand()
             ))
             .toList();
     }

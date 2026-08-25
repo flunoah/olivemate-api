@@ -15,6 +15,8 @@
 - [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
 - [ ] `[BE]` `notification`/`push_subscription` 테이블명 단수형 통일 검토
 - [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
+- [ ] `[문서]` 루트 `CLAUDE.md`가 참조하는 `docs/db-schema.md`가 실제로는 없고, 스키마 문서는 `src/main/resources/db/migration/CLAUDE.md`에 있음 — 참조 경로 정리 필요
+- [ ] `[FE]` 대시보드 상품 자동완성이 401(토큰 만료) 시 조용히 실패함 — `authFetch`가 refresh까지 실패해도 자동완성 코드는 `if (!res.ok) return;`로 끝내버려 사용자는 "자동완성이 안 된다"고만 느끼고 로그인 문제인지 알 방법이 없음. 재현: 만료/무효 토큰 상태로 대시보드에서 제품명 입력
 
 ## 🟢 Low
 
@@ -25,14 +27,21 @@
 - [ ] `[BE]` 응답 포맷 통일 (`ApiResponse` 래핑 여부)
 - [ ] `[FE]` ESLint 도입 (`lint` 스크립트 부재)
 - [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요) + `npm run build`(프론트)
+- [ ] `[BE]` `point_ledger.brand`는 있지만 `product_id` 등 상품 단위 구조적 참조는 여전히 없음 — 카테고리 집계 등 필요해지면 검토
+- [ ] `[BE]` `ProductExcelParser`가 엑셀 컬럼 위치(상품코드/브랜드/상품명/정상가/판매가 순서)를 하드코딩 — 크롤러 출력 컬럼 순서가 바뀌면 조용히 잘못된 데이터를 넣음. 헤더 이름 기반 매칭으로 교체 검토
+- [ ] `[FE]` 상품 자동완성 레이스 컨디션 — 빠르게 입력값을 바꾸면 먼저 나간 요청의 응답이 나중에 도착해 최신 입력과 안 맞는 결과가 뜰 수 있음(요청 취소/순번 검증 없음)
+- [ ] `[FE]` 상품 자동완성이 한글 조합 중(`compositionstart`/`end` 미처리)에도 매 `onChange`마다 디바운스 타이머를 리셋 — 불완전한 자모 상태로 검색 요청이 나갈 수 있음
+- [ ] `[FE]` 상품 카탈로그가 비어있을 때(엑셀 업로드 전) 자동완성이 항상 빈 배열만 반환 — 안내 문구 없이 조용히 비어있어 "고장났다"고 오인하기 쉬움
+- [ ] `[FE]` 상품 자동완성 드롭다운의 바깥 클릭 감지가 `mousedown` 리스너만 등록 — 모바일 터치 전용 기기에서 바깥 탭 시 안 닫힐 가능성
+- [ ] `[FE]` 자동완성으로 상품 선택 후 `productName`을 한 글자만 고쳐도 `selectedBrand`가 매번 null로 리셋됨 — 의도된 동작이지만 사용자가 "브랜드가 왜 또 빠지지" 혼란 소지
 
 ## 📦 Backlog — 신규 기능
 
-- [ ] 제품명 자동완성/추천 (LLM)
 - [ ] 버그 제보 LLM triage
 
 ## ✅ Done
 
+- [x] `[BE/FE]` 어드민 상품 카탈로그 엑셀 업로드(`POST /api/v1/admin/products/upload`, `goods_no` 기준 upsert) + 크루 대시보드 자동완성/사용액 자동 입력 + `history` 페이지 이번 달 브랜드별 소비 집계(`point_ledger.brand` 비정규화 저장, 프론트 클라이언트 집계, 새 백엔드 엔드포인트 없음)
 - [x] 소멸 임박 알림 (D-7/D-3/D-1) — `PointExpiryReminderScheduler`(매일 07:00 KST) → `PointService.remindExpiringPoints()` → `PointExpiringEvent` → `PointExpiringNotificationListener`(기존 `PointEarnedNotificationListener`와 동일 패턴)가 인앱 알림 저장 + 웹푸시 발송. 겸사겸사 `Notification.pointEarned()`/`WebPushClient`의 잘못된 deepLink(`/points/history` → `/history`, 존재하지 않는 라우트였음)도 수정
 - [x] 인앱 알림 리스트 UI — `app/notifications/page.tsx` 신규, 대시보드 헤더 종 아이콘(안 읽음 뱃지 포함)에서 진입
 - [x] `[BE]` `WebPushClient`의 `catch (Exception)` 세분화. `HttpResponse` 상태 코드(404/410)로만 구독 삭제, 그 외 일시적 오류(`IOException`/`ExecutionException`/`InterruptedException`)·설정 오류(`GeneralSecurityException`/`JoseException`)는 로그만 남기고 구독 유지

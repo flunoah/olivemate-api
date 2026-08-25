@@ -20,6 +20,7 @@ public class PointLedger {
     private final LocalDateTime expiredAt;
     private final LocalDateTime createdAt;
     private final String        description;
+    private final String        brand;
 
     // ── 팩토리 메서드 ──────────────────────────────
 
@@ -28,9 +29,9 @@ public class PointLedger {
                                           UUID txId, LedgerType type, Money amount,
                                           Money remaining, LocalDateTime grantedAt,
                                           LocalDateTime expiredAt, LocalDateTime createdAt,
-                                          String description) {
+                                          String description, String brand) {
         return new PointLedger(ledgerId, crewId, workDayId, txId, type, amount,
-                               remaining, grantedAt, expiredAt, createdAt, description);
+                               remaining, grantedAt, expiredAt, createdAt, description, brand);
     }
 
     public static PointLedger earn(CrewId crewId, UUID workDayId,
@@ -39,17 +40,17 @@ public class PointLedger {
         return new PointLedger(
             UUID.randomUUID(), crewId, workDayId, null,
             LedgerType.EARN, amount, amount,
-            grantedAt, expiredAt, LocalDateTime.now(), null
+            grantedAt, expiredAt, LocalDateTime.now(), null, null
         );
     }
 
     public static PointLedger use(CrewId crewId, UUID txId,
                                   Money amount, LocalDateTime usedAt,
-                                  String description) {
+                                  String description, String brand) {
         return new PointLedger(
             UUID.randomUUID(), crewId, null, txId,
             LedgerType.USE, amount, Money.zero(),
-            usedAt, null, LocalDateTime.now(), description
+            usedAt, null, LocalDateTime.now(), description, brand
         );
     }
 
@@ -58,7 +59,7 @@ public class PointLedger {
         return new PointLedger(
             UUID.randomUUID(), crewId, null, null,
             LedgerType.EXPIRE, amount, Money.zero(),
-            expiredAt, expiredAt, LocalDateTime.now(), null
+            expiredAt, expiredAt, LocalDateTime.now(), null, null
         );
     }
 
@@ -67,7 +68,7 @@ public class PointLedger {
         return new PointLedger(
             UUID.randomUUID(), crewId, null, null,
             LedgerType.INIT, amount, amount,
-            grantedAt, expiredAt, LocalDateTime.now(), null
+            grantedAt, expiredAt, LocalDateTime.now(), null, null
         );
     }
 
@@ -97,7 +98,7 @@ public class PointLedger {
                         UUID txId, LedgerType type, Money amount,
                         Money remaining, LocalDateTime grantedAt,
                         LocalDateTime expiredAt, LocalDateTime createdAt,
-                        String description) {
+                        String description, String brand) {
         this.ledgerId    = ledgerId;
         this.crewId      = crewId;
         this.workDayId   = workDayId;
@@ -109,6 +110,7 @@ public class PointLedger {
         this.expiredAt   = expiredAt;
         this.createdAt   = createdAt;
         this.description = description;
+        this.brand       = brand;
     }
 
     // ── Getters ────────────────────────────────────
@@ -123,4 +125,5 @@ public class PointLedger {
     public LocalDateTime getExpiredAt()   { return expiredAt; }
     public LocalDateTime getCreatedAt()   { return createdAt; }
     public String        getDescription() { return description; }
+    public String        getBrand()       { return brand; }
 }

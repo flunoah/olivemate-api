@@ -44,6 +44,7 @@ psql "$DB_URL" -f src/main/resources/db/migration/V1__add_missing_indexes.sql
 | `point_ledger` | 포인트 원장 (append-only) | `ledger_id` |
 | `notification` | 인앱 알림 이력 | `id` |
 | `push_subscription` | Web Push 구독 정보 | `id` |
+| `product` | 올리브영 자사몰 상품 카탈로그 (크루용 캐시) | `product_id` |
 
 모든 PK는 `UUID`이며 애플리케이션에서 생성한다 (DB 시퀀스 미사용).
 `crew_id`로 논리적 연결은 하지만 **물리적 FK 제약은 걸지 않는다.**
@@ -171,6 +172,7 @@ CSV 문자열로 저장하는 구조라 **요일 조건으로 SQL 검색이 불�
 | `expired_at` | timestamp | NULL 허용 | 만료 예정일. NULL이면 무기한 |
 | `created_at` | timestamp | 자동, `updatable=false` | 실제 행 생성 시각 |
 | `description` | varchar | NULL 허용 | 제품명 등 메모 |
+| `brand` | varchar(100) | NULL 허용 | `USE` 원장에서, 자동완성으로 상품을 선택한 경우 그 상품의 브랜드를 비정규화 복사. 자유 입력이면 NULL. `history` 페이지의 "이번 달 브랜드별 소비" 집계에 쓰임(`product` 테이블과 물리적 FK 없음, 값만 복사) |
 
 **인덱스**
 - `idx_ledger_crew_type_expired (crew_id, ledger_type, expired_at)` — FIFO 차감 대상 조회, 만료 예정 합계
@@ -255,6 +257,28 @@ Web Push 구독 정보. 크루 1명이 여러 기기/브라우저를 가질 수 
 같은 브라우저에서 재구독을 시도하면 동일한 `endpoint`가 오므로, `PushSubscriptionService.subscribe()`가 **`findByEndpoint`로 선확인 후 있으면 무시**하는 멱등 처리를 한다. 이 방어가 없으면 사용자가 "알림 켜기"를 두 번 누를 때 `DataIntegrityViolationException`이 발생한다.
 
 발송 실패(410 Gone 등) 시 해당 행을 삭제해 죽은 구독을 정리한다.
+
+---
+
+## product
+
+올리브영 자사몰 상품 카탈로그. 크롤링은 앱 바깥에서 별도로 이뤄지고 그 결과가 엑셀 파일로 전달되며, 어드민이 `POST /api/v1/admin/products/upload`로 업로드하면 `ProductSyncService`가 `goods_no` 기준 upsert로 이 테이블에 반영한다 (크루/포인트 도메인과 논리적 연결 없음, 독립 참조 테이블. `point_ledger.brand`로 소비 패턴 집계 시에만 값이 복사되어 쓰임).
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| `product_id` | UUID | PK | |
+| `goods_no` | varchar(50) | NOT NULL, **UNIQUE** | 상품코드. 엑셀 재업로드 시 upsert 판별 키 |
+| `brand` | varchar(100) | NOT NULL | 브랜드명 |
+| `name` | varchar(200) | NOT NULL | 상품명 |
+| `regular_price` | bigint | NOT NULL | 정상가(원) |
+| `sale_price` | bigint | NOT NULL | 판매가(원) — 포인트 사용 시 사용액 자동 입력값으로 쓰임 |
+| `synced_at` | timestamp | NOT NULL | 마지막 엑셀 업로드 반영 시각 |
+
+**인덱스**
+- `idx_product_goods_no` — upsert 시 `goods_no` 조회
+- `idx_product_name` — 자동완성 `ILIKE '%keyword%'` 검색. 카탈로그가 커지면 `pg_trgm` 도입 검토
+
+**주의**: `point_ledger`와 물리적 FK 연결 없음. 크루가 자동완성으로 상품을 선택하면 `point_ledger.brand`에 브랜드명만 비정규화 복사되고, `product_id` 단위 추적이나 카테고리 집계는 하지 않는다 (`TODO.md` 참고).
 
 ---
 

@@ -1,16 +1,21 @@
 package com.oliveyoung.mate.presentation;
 
 import com.oliveyoung.mate.application.point.PointService;
+import com.oliveyoung.mate.application.product.ProductSyncService;
+import com.oliveyoung.mate.application.product.ProductUploadItem;
+import com.oliveyoung.mate.application.product.result.ProductUploadResult;
 import com.oliveyoung.mate.application.schedule.ScheduleService;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.crew.model.Crew;
 import com.oliveyoung.mate.domain.crew.repository.CrewRepository;
+import com.oliveyoung.mate.infrastructure.product.excel.ProductExcelParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +33,8 @@ public class AdminController {
     private final ScheduleService scheduleService;
     private final CrewRepository  crewRepository;
     private final WorkDayRepository workDayRepository;
+    private final ProductExcelParser productExcelParser;
+    private final ProductSyncService productSyncService;
 
     record CrewSummary(UUID crewId, String name, String loginId, String role) {}
     record WorkDaySummary(LocalDate workDate, boolean pointGranted, boolean skipped) {}
@@ -82,5 +89,14 @@ public class AdminController {
             .map(w -> new WorkDaySummary(w.getWorkDate(), w.isPointGranted(), w.isSkipped()))
             .toList();
         return ResponseEntity.ok(result);
+    }
+
+    // 상품 카탈로그 엑셀 업로드 (어드민 UI용, 크롤링은 앱 바깥에서 이뤄짐)
+    @PostMapping("/products/upload")
+    public ResponseEntity<ProductUploadResult> uploadProducts(@RequestParam("file") MultipartFile file) {
+        SecurityUtils.validateAdmin();
+        List<ProductUploadItem> items = productExcelParser.parse(file);
+        int synced = productSyncService.syncAll(items);
+        return ResponseEntity.ok(new ProductUploadResult(items.size(), synced, items.size() - synced));
     }
 }

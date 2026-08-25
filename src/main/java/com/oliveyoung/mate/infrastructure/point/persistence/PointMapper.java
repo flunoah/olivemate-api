@@ -35,7 +35,8 @@ public class PointMapper {
             entity.getGrantedAt(),
             entity.getExpiredAt(),
             entity.getCreatedAt(),
-            entity.getDescription()
+            entity.getDescription(),
+            entity.getBrand()
         );
     }
 
@@ -53,6 +54,7 @@ public class PointMapper {
             .grantedAt(ledger.getGrantedAt())
             .expiredAt(ledger.getExpiredAt())
             .description(ledger.getDescription())
+            .brand(ledger.getBrand())
             .build();
     }
 }

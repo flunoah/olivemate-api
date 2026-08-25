@@ -7,5 +7,6 @@ public record UsePointCommand(
     UUID      crewId,
     long      amount,
     String    description,
-    LocalDate usedAt
+    LocalDate usedAt,
+    String    brand
 ) {}

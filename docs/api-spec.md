@@ -119,11 +119,13 @@ FIFO 차감. `validateSelfOrAdmin`
 {
   "amount": 3000,
   "description": "닥터자르트 시카페어 크림",
-  "usedAt": "2026-08-10"
+  "usedAt": "2026-08-10",
+  "brand": "닥터자르트"
 }
 ```
 
 - `usedAt`이 `null`이면 현재 시각(KST) 사용.
+- `brand`는 프론트에서 상품 자동완성(`GET /api/v1/products/search`)으로 선택한 경우에만 채워짐. 자유 입력이면 `null` — `point_ledger.brand`에 그대로 저장되며, `history` 페이지의 브랜드별 소비 집계에 쓰인다.
 
 **응답** `200` — `UsePointResult`
 ```json
@@ -152,7 +154,8 @@ FIFO 차감. `validateSelfOrAdmin`
   "grantedAt": "2026-08-11T00:00:00",
   "expiredAt": "2026-08-31T00:00:00",
   "createdAt": "2026-08-11T01:00:03",
-  "description": null
+  "description": null,
+  "brand": null
 }]
 ```
 
@@ -361,6 +364,40 @@ const serverDayToJsDay = (d: number): number => (d === 7 ? 0 : d);
 
 **쿼리**: `?endpoint={url}` (URL 인코딩 필수)
 **응답** `200` — `ApiResponse<Void>`
+
+---
+
+## Products
+
+### GET /api/v1/products/search?q={keyword}
+
+상품명 자동완성. 인증만 되면 조회 가능 (`validateSelfOrAdmin` 등 별도 권한 검증 없음). 크롤링은 앱 바깥에서 별도로 이뤄지고, 그 결과를 어드민이 엑셀로 업로드해 채운 로컬 카탈로그에서 검색한다 (`POST /api/v1/admin/products/upload`).
+
+**응답** `200` — `List<ProductSearchResult>`
+```json
+[{ "id": "b3f1...", "goodsNo": "A0000123", "brand": "닥터자르트", "name": "시카페어 크림", "regularPrice": 38000, "salePrice": 32000 }]
+```
+
+- `q`가 공백/빈 문자열이면 빈 배열 반환.
+- 최대 20건, 상품명 오름차순.
+
+> **주의**: `salePrice`는 상품 사용액 자동 입력 참고용일 뿐, `POST /api/v1/points/use/{crewId}`의 `amount`와 서버에서 연결되어 있지 않다. 프론트가 선택 시 `amount` 입력값을 채워주는 방식(수정 가능)이며 서버는 그대로 받은 `amount`만 신뢰한다.
+
+### POST /api/v1/admin/products/upload
+
+상품 카탈로그 엑셀 업로드(어드민 UI 전용). `validateAdmin()`. `multipart/form-data`, 파트 이름 `file`.
+
+엑셀 컬럼은 순서 고정: `상품코드 / 브랜드 / 상품명 / 정상가 / 판매가` (1행은 헤더, 그 뒤 컬럼은 무시). `goodsNo`(상품코드) 기준 upsert — 이미 있으면 브랜드/상품명/가격 갱신, 없으면 신규 생성. 엑셀에 없는 기존 상품은 그대로 유지된다.
+
+**응답** `200` — `ProductUploadResult`
+```json
+{ "total": 1200, "synced": 1198, "failed": 2 }
+```
+
+**에러**
+| 상황 | 상태 | code |
+|---|---|---|
+| 파일이 비어 있거나 xlsx/xls로 열 수 없음 | 400 | `PRODUCT_UPLOAD_INVALID` |
 
 ---
 

@@ -9,5 +9,7 @@ public record UsePointRequest(
 
     String description,
 
-    LocalDate usedAt  // null이면 오늘 날짜로 처리
+    LocalDate usedAt,  // null이면 오늘 날짜로 처리
+
+    String brand  // 자동완성으로 상품을 선택한 경우에만 채워짐, 자유 입력이면 null
 ) {}

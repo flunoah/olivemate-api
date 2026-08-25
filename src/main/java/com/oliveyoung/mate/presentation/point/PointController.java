@@ -41,7 +41,8 @@ public class PointController {
             crewId,
             request.amount(),
             request.description(),
-            request.usedAt()
+            request.usedAt(),
+            request.brand()
         ));
         return ResponseEntity.ok(result);
     }
