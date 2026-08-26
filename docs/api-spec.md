@@ -146,6 +146,8 @@ FIFO 차감. `validateSelfOrAdmin`
 **응답** `200` — `List<LedgerHistoryResult>`
 ```json
 [{
+  "ledgerId": "8f2e...",
+  "txId": "b3c1...",
   "ledgerType": "EARN",
   "amount": 4000,
   "remaining": 4000,
@@ -156,7 +158,7 @@ FIFO 차감. `validateSelfOrAdmin`
 }]
 ```
 
-`createdAt` 내림차순 정렬. `ledgerType`은 `INIT` / `EARN` / `USE` / `EXPIRE`.
+`createdAt` 내림차순 정렬. `ledgerType`은 `INIT` / `EARN` / `USE` / `EXPIRE`. `ledgerId`/`txId`는 Phase 6(Thymeleaf `/history` 페이지) 추가 — 같은 `txId`를 가진 `USE` 원장들은 한 번의 `use()` 호출(FIFO로 여러 원장에 걸쳐 분할될 수 있음)에서 나온 것으로, `POST /api/v1/points/cancel`의 `ledgerId`에 그중 아무거나 넘기면 전체가 함께 취소된다.
 
 ### POST /api/v1/points/initialize/{crewId}
 
