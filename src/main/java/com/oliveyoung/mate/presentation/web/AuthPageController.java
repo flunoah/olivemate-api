@@ -11,14 +11,10 @@ public class AuthPageController {
     @GetMapping("/login")
     public String loginPage(
             @RequestParam(required = false) String error,
-            @RequestParam(required = false) String success,
             @RequestParam(required = false) String logout,
             Model model) {
         if (error != null) {
             model.addAttribute("error", "아이디 또는 비밀번호를 확인해주세요");
-        }
-        if (success != null) {
-            model.addAttribute("message", "로그인 성공! 대시보드는 준비 중입니다.");
         }
         if (logout != null) {
             model.addAttribute("message", "로그아웃되었습니다.");
