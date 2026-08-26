@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -68,12 +69,13 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/health", "/login", "/css/**", "/js/**", "/webjars/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
                 .usernameParameter("loginId")
-                .defaultSuccessUrl("/login?success", true)
+                .successHandler(roleBasedSuccessHandler())
                 .failureUrl("/login?error")
             )
             .logout(logout -> logout
@@ -82,6 +84,19 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+    /**
+     * 로그인 성공 시 계정 역할에 따라 목적지를 분기한다.
+     * ADMIN은 /admin, 그 외 크루는 현재 유일하게 이관된 크루용 페이지인 /notifications로 이동.
+     */
+    @Bean
+    public AuthenticationSuccessHandler roleBasedSuccessHandler() {
+        return (request, response, authentication) -> {
+            boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            response.sendRedirect(isAdmin ? "/admin" : "/notifications");
+        };
     }
 
     @Bean

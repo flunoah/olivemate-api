@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-2xl mx-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl font-bold text-gray-800">관리자 - 크루 목록</h1>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-500">
+                    <tr>
+                        <th class="px-4 py-3 font-medium">이름</th>
+                        <th class="px-4 py-3 font-medium">사번</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="crew : ${crews}" class="border-t border-gray-100">
+                        <td class="px-4 py-3" th:text="${crew.name}"></td>
+                        <td class="px-4 py-3 text-gray-500" th:text="${crew.loginId}"></td>
+                    </tr>
+                    <tr th:if="${crews.isEmpty()}">
+                        <td colspan="2" class="px-4 py-6 text-center text-gray-400">등록된 크루가 없습니다.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
