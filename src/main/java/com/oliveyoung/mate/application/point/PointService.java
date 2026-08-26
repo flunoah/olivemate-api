@@ -142,6 +142,8 @@ public class PointService {
         return point.getLedgers().stream()
             .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
             .map(l -> new LedgerHistoryResult(
+                l.getLedgerId(),
+                l.getTxId(),
                 l.getType(),
                 l.getAmount().amount(),
                 l.getRemaining().amount(),

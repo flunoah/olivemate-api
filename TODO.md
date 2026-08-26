@@ -9,7 +9,7 @@
 ## 🟡 Medium
 
 - [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
-- [ ] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`)
+- [x] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`) — Phase 6에서 `/history`가 Thymeleaf `HistoryPageController`로 이관되며 `?date=` 쿼리파라미터를 서버에서 직접 처리하게 되어 해결(Next.js `useSearchParams` 구현은 더 이상 불필요)
 - [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
 - [ ] `[BE]` `notification`/`push_subscription` 테이블명 단수형 통일 검토
 - [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
@@ -36,6 +36,7 @@
   - Phase 3(완료): `mypage`(근무요일 조회/변경) + `signup`(회원가입)
   - Phase 4(완료): `/admin` CRUD 확장(근무관리·포인트내역·포인트적립·회원정보·크루등록)
   - Phase 5(완료): `dashboard`(포인트 잔액, 이번 주 근무 현황, 포인트 사용, 되돌리기). 캘린더(`history`)와 소정근무일 등록(`mypage`, Phase 3에서 이미 이관)은 dashboard와 별도 페이지로 확인되어 이번 범위 밖. 자동완성은 원본 코드베이스에 애초에 존재하지 않아 이관 대상 없음. `UsePointResult`에 `usedLedgerId` 추가해 되돌리기 기능을 실제로 동작하게 수정(기존엔 dead code)
+  - Phase 6(완료): `history`(캘린더 — 달력 그리드, 표시 월 요약, 만료 임박 배너, 날짜 클릭 상세, 당일 사용 건 취소, 지난달 적립 내역). `LedgerHistoryResult`에 `ledgerId`/`txId` 추가해 취소 기능을 실제로 동작하게 수정(기존 Next.js FE는 없는 `l.id`를 읽으려 해 취소 버튼이 항상 죽어 있었음 — `mergedIds`가 매번 빈 배열). 알림 딥링크(`/history?date=`)가 그대로 이 페이지로 연결되어 TODO의 "알림 딥링크 `?date=` 파라미터 처리" 항목도 함께 해결됨
   - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 알림 읽음 처리 optimistic update
   - 미결정: Web Push 죽은 코드(`app/lib/push.ts`, 현재 어디서도 미호출) 이관 여부, admin 인증 이원화(`X-Admin-Key` vs `ROLE_ADMIN`) 통합 여부
   - 상세 설계는 `/Users/seon/.claude/plans/mate-front-next-js-react-dynamic-heron.md` 참고(임시 경로, 착수 시 이 TODO 기준으로 재설계할 것)
