@@ -12,12 +12,16 @@ public class AuthPageController {
     public String loginPage(
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String logout,
+            @RequestParam(required = false) String registered,
             Model model) {
         if (error != null) {
             model.addAttribute("error", "아이디 또는 비밀번호를 확인해주세요");
         }
         if (logout != null) {
             model.addAttribute("message", "로그아웃되었습니다.");
+        }
+        if (registered != null) {
+            model.addAttribute("message", "가입이 완료됐어요! 로그인해주세요.");
         }
         return "login";
     }
