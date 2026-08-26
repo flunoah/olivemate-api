@@ -15,6 +15,7 @@
 - [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
 - [ ] `[BE]` `notification`/`push_subscription` 테이블명 단수형 통일 검토
 - [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
+- [ ] `[FE]` `/admin` 페이지가 존재하지 않는 백엔드 엔드포인트를 호출 중 — `POST /api/v1/admin/points/grant`(포인트적립 탭), `DELETE /api/v1/admin/crews/{id}`(크루 삭제). signup 때 발견한 것과 같은 종류의 프론트/백엔드 경로 불일치로, 두 기능 모두 프로덕션에서 항상 실패해왔을 것으로 보임
 
 ## 🟢 Low
 
@@ -31,8 +32,11 @@
 - [ ] 제품명 자동완성/추천 (LLM)
 - [ ] 버그 제보 LLM triage
 - [ ] **프론트엔드 스택 전환(Phase 1+): `mate-front`(Next.js/React SPA) → `mate` 내 Thymeleaf + htmx.** SEO 불필요 + 백엔드(Java/Spring) 스택 활용도를 높이려는 목적. Phase 0(세션 인증 기반)은 완료(Done 참고). 병행 운영 없이 사용자 노출은 한 번에 전환하되, 코드는 phase마다 짧은 브랜치로 `main` merge + 배포(네비게이션은 전체 이관 완료 전까지 그대로 Next.js를 가리킴).
-  - Phase 1(다음 단계): 작고 읽기 위주인 `notifications` 페이지 하나를 끝까지 이관해 컨트롤러/템플릿/htmx 패턴 확립
-  - Phase 2+: `admin/login` → `mypage`/`signup` → `admin` → `dashboard` 순
+  - Phase 1(완료): 작고 읽기 위주인 `notifications` 페이지 하나를 끝까지 이관해 컨트롤러/템플릿/htmx 패턴 확립
+  - Phase 2(완료): `admin`/`login` 역할 기반 리다이렉트 + `/admin` 최소 스텁
+  - Phase 3(완료): `mypage`(근무요일 조회/변경) + `signup`(회원가입)
+  - Phase 4(완료): `/admin` CRUD 확장(근무관리·포인트내역·포인트적립·회원정보·크루등록)
+  - Phase 5(다음 단계): `dashboard`
   - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 대시보드 되돌리기 10초 카운트다운, 알림 읽음 처리 optimistic update
   - 미결정: Web Push 죽은 코드(`app/lib/push.ts`, 현재 어디서도 미호출) 이관 여부, admin 인증 이원화(`X-Admin-Key` vs `ROLE_ADMIN`) 통합 여부
   - 상세 설계는 `/Users/seon/.claude/plans/mate-front-next-js-react-dynamic-heron.md` 참고(임시 경로, 착수 시 이 TODO 기준으로 재설계할 것)
