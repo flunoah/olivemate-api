@@ -404,35 +404,37 @@ stateDiagram-v2
 
 ## 7. 인증 흐름
 
+2026-08-26 최종 컷오버로 JWT(`JwtAuthFilter`/`JwtProvider`) 및 CORS 설정을 전부 제거했다. `SecurityConfig`는 이제 `webFilterChain` 단일 체인만 존재하며, Spring Security 기본 `HttpSession` 기반 폼로그인으로 동작한다.
+
 ```mermaid
 sequenceDiagram
-    participant FE as Frontend
-    participant AF as authFetch
-    participant API as Backend
+    participant Browser
+    participant Security as Spring Security (webFilterChain)
+    participant UDS as CrewUserDetailsService
 
-    FE->>AF: authFetch('/api/v1/...')
-    AF->>API: Authorization: Bearer {accessToken}
+    Browser->>Security: POST /login (loginId, password)
+    Security->>UDS: loadUserByUsername(loginId)
+    UDS-->>Security: CrewPrincipal
+    Security->>Security: DaoAuthenticationProvider + BCrypt 검증
+    alt 성공
+        Security->>Security: SecurityContext를 HttpSession에 저장
+        Security-->>Browser: 302 redirect (ROLE_ADMIN→/admin, 그 외→/dashboard)
+    else 실패
+        Security-->>Browser: 302 /login?error
+    end
 
-    alt 200 OK
-        API-->>FE: 응답
-    else 401 Unauthorized
-        API-->>AF: 401
-        AF->>AF: silentRefresh()<br/>진행 중이면 Promise 공유
-        AF->>API: POST /auth/refresh<br/>X-Refresh-Token
-        alt 갱신 성공
-            API-->>AF: 새 accessToken
-            AF->>AF: saveTokens()
-            AF->>API: 원 요청 1회 재시도 (retried=true)
-            API-->>FE: 응답
-        else 갱신 실패
-            AF->>AF: clearAuth()
-            AF-->>FE: 401 → 로그인 페이지로
-        end
+    Browser->>Security: 이후 요청 (세션 쿠키 자동 첨부)
+    alt 세션 유효 + 인가 통과
+        Security-->>Browser: 페이지/응답
+    else 세션 없음/만료
+        Security-->>Browser: 302 /login
     end
 ```
 
-- 백엔드에서 인증된 크루 ID는 `SecurityUtils.authenticatedCrewId()`(UUID) → `CrewId.of(...)`로 변환해 사용.
+- 인증된 크루 ID는 `SecurityUtils.authenticatedCrewId()`(UUID) → `CrewId.of(...)`로 변환해 사용.
 - 권한 검증은 `SecurityUtils.validateAdmin()` / `validateSelfOrAdmin(crewId)`.
+- `/admin/**`은 `hasRole("ADMIN")`으로 선언적 보호, `/api/v1/admin/**`(배치 수동 트리거 3종)만 예외적으로 permitAll + CSRF 무시 — 세션 없이 `X-Admin-Key` 헤더만으로 curl 호출되는 운영 도구이기 때문(`docs/api-spec.md` 참고).
+- htmx/fetch로 상태 변경 요청을 보낼 때는 `fragments/layout.html`의 `_csrf`/`_csrf_header` meta 태그 값을 헤더에 실어야 한다 (Spring Security 기본 CSRF 보호가 세션 체인 전체에 적용됨).
 
 ---
 
