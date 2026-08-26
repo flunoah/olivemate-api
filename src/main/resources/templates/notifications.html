@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <title>알림 - 마이자소</title>
+</head>
+<body class="bg-gray-50 min-h-screen pb-20">
+    <header class="bg-[#1B9E5B] text-white text-center py-4 font-semibold">알림</header>
+
+    <main class="max-w-md mx-auto px-4 py-4 space-y-2">
+        <p th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-400 py-12">받은 알림이 없어요</p>
+
+        <div th:each="n : ${notifications}"
+             th:hx-patch="@{/notifications/{id}/read(id=${n.id}, deepLink=${n.deepLink})}"
+             hx-swap="none"
+             th:classappend="${n.read} ? 'bg-white border-gray-200' : 'bg-[#F0FFF4] border-green-200'"
+             class="rounded-xl border p-4 flex gap-3 items-start cursor-pointer">
+            <div class="text-2xl" th:text="${n.emoji}"></div>
+            <div class="flex-1">
+                <div class="flex items-center gap-1.5">
+                    <span class="font-medium text-sm" th:text="${n.title}"></span>
+                    <span th:if="${!n.read}" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                </div>
+                <p class="text-sm text-gray-500 mt-0.5" th:text="${n.body}"></p>
+                <p class="text-xs text-gray-400 mt-1" th:text="${n.timeAgo}"></p>
+            </div>
+        </div>
+    </main>
+
+    <nav th:replace="~{fragments/layout :: nav}"></nav>
+</body>
+</html>
