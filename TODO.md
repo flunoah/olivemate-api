@@ -1,6 +1,8 @@
 # TODO
 
 > 상세 배경은 `docs/architecture.md`, `docs/api-spec.md`, `mate-front/docs/frontend-architecture.md` 참고
+>
+> **2026-08-26 최종 컷오버 완료**: `mate-front`(Next.js)는 은퇴했다 — Vercel에는 전체 경로를 백엔드로 302 리다이렉트하는 최소 배포만 남기고, 코드는 더 이상 손대지 않는다. 아래 `[FE]` 항목들은 전부 은퇴한 저장소 얘기라 실질적으로 moot하지만, 히스토리 보존을 위해 지우지 않고 남겨둔다.
 
 ## 🔴 High — 실사용자에게 영향 있음
 
@@ -24,7 +26,9 @@
 - [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
 - [ ] `[BE]` 응답 포맷 통일 (`ApiResponse` 래핑 여부)
 - [ ] `[FE]` ESLint 도입 (`lint` 스크립트 부재)
-- [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요) + `npm run build`(프론트). 확장 시 CI 러너에 [Tailwind standalone CLI](https://github.com/tailwindlabs/tailwindcss/releases) 바이너리도 설치 필요(`processResources`가 `tailwindBuild`에 의존)
+- [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요). 확장 시 CI 러너에 [Tailwind standalone CLI](https://github.com/tailwindlabs/tailwindcss/releases) 바이너리도 설치 필요(`processResources`가 `tailwindBuild`에 의존)
+- [ ] `[BE]` Web Push 알림 아이콘 파일(`/icons/icon-192.png`, `/icons/badge-72.png`) 부재 — `service-worker.js`가 참조하지만 실제 파일이 없음. mate-front 시절부터 있던 기존 결함으로, 최종 컷오버 시 `static/service-worker.js`로 그대로 포팅됨 (`docs/api-spec.md` "알려진 결함" 참고)
+- [ ] mate-front GitHub 레포 아카이브 — 최종 컷오버에서 Vercel 리다이렉트 배포까지는 완료. 레포 아카이브(`gh repo archive`)는 안정화 확인 후 사용자가 직접 진행하기로 함
 
 ## 📦 Backlog — 신규 기능
 
@@ -38,8 +42,8 @@
   - Phase 5(완료): `dashboard`(포인트 잔액, 이번 주 근무 현황, 포인트 사용, 되돌리기). 캘린더(`history`)와 소정근무일 등록(`mypage`, Phase 3에서 이미 이관)은 dashboard와 별도 페이지로 확인되어 이번 범위 밖. 자동완성은 원본 코드베이스에 애초에 존재하지 않아 이관 대상 없음. `UsePointResult`에 `usedLedgerId` 추가해 되돌리기 기능을 실제로 동작하게 수정(기존엔 dead code)
   - Phase 6(완료): `history`(캘린더 — 달력 그리드, 표시 월 요약, 만료 임박 배너, 날짜 클릭 상세, 당일 사용 건 취소, 지난달 적립 내역). `LedgerHistoryResult`에 `ledgerId`/`txId` 추가해 취소 기능을 실제로 동작하게 수정(기존 Next.js FE는 없는 `l.id`를 읽으려 해 취소 버튼이 항상 죽어 있었음 — `mergedIds`가 매번 빈 배열). 알림 딥링크(`/history?date=`)가 그대로 이 페이지로 연결되어 TODO의 "알림 딥링크 `?date=` 파라미터 처리" 항목도 함께 해결됨
   - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 알림 읽음 처리 optimistic update
-  - 미결정: Web Push 죽은 코드(`app/lib/push.ts`, 현재 어디서도 미호출) 이관 여부, admin 인증 이원화(`X-Admin-Key` vs `ROLE_ADMIN`) 통합 여부
-  - 상세 설계는 `/Users/seon/.claude/plans/mate-front-next-js-react-dynamic-heron.md` 참고(임시 경로, 착수 시 이 TODO 기준으로 재설계할 것)
+  - Phase 7(완료): **최종 컷오버.** `SecurityConfig`를 `webFilterChain` 단일 체인으로 축소 — CORS 설정 전면 제거, `JwtAuthFilter`/`JwtProvider`/`TokenProvider` 삭제, `CrewService.signUp()`에서 토큰 발급 제거(`login()`/`refresh()`도 삭제). mate-front 전용이었던 `/api/v1/{auth,attendance,schedule,point,notification}` REST 컨트롤러 삭제, `AdminController`의 `ROLE_ADMIN` 기반 `getCrews`/`getWorkDays`도 삭제(admin 인증 이원화 문제는 이렇게 X-Admin-Key 단일화로 해결). `PushSubscriptionController`를 `/api/v1/push`→`/push`로 옮겨 세션 인증 체계에 편입, Web Push 구독/해지 UI+서비스워커를 `mypage.html`로 이관(그동안 "미결정"이던 항목 해결). 루트(`/`) 경로가 없던 문제도 `RootController` 추가로 해결(역할별 리다이렉트). mate-front는 `next.config.ts`를 전체 경로→백엔드 302 리다이렉트로 교체하는 최소 배포만 남기고 은퇴
+  - 상세 설계는 `/Users/seon/.claude/plans/kind-meandering-pike.md` 참고
 
 ## ✅ Done
 

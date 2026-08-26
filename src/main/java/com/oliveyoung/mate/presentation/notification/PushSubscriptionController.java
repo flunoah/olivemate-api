@@ -7,7 +7,7 @@ import com.oliveyoung.mate.presentation.SecurityUtils;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/push")
+@RequestMapping("/push")
 public class PushSubscriptionController {
 
     private final PushSubscriptionService pushSubscriptionService;
