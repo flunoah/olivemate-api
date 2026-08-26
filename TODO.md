@@ -8,8 +8,6 @@
 
 ## 🟡 Medium
 
-- [ ] `[BE]` `UsePointResult`에 `txId` 추가 → 프론트 되돌리기 UI 활성화
-- [ ] `[FE]` 되돌리기 UI 동작 확인 (위 작업 후)
 - [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
 - [ ] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`)
 - [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
@@ -20,6 +18,7 @@
 ## 🟢 Low
 
 - [ ] `[BE]` FIFO 로직 단위 테스트 (`Point.use()`, `cancelUse()`, `expireOld()`)
+- [ ] `[BE]` `PointService.cancelUse()`의 당일 판정(`useLedger.getCreatedAt().toLocalDate().equals(LocalDate.now())`)이 시스템 기본 zone 사용 중 — `Asia/Seoul` 미적용. 자정 근처 KST 사용 건에서 취소 가능 여부가 어긋날 수 있음
 - [ ] `[FE]` 공통 컴포넌트 추출 (`Toast`, `Card`, `Button`)
 - [ ] `[FE]` 컬러 토큰 상수화
 - [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
@@ -36,8 +35,8 @@
   - Phase 2(완료): `admin`/`login` 역할 기반 리다이렉트 + `/admin` 최소 스텁
   - Phase 3(완료): `mypage`(근무요일 조회/변경) + `signup`(회원가입)
   - Phase 4(완료): `/admin` CRUD 확장(근무관리·포인트내역·포인트적립·회원정보·크루등록)
-  - Phase 5(다음 단계): `dashboard`
-  - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 대시보드 되돌리기 10초 카운트다운, 알림 읽음 처리 optimistic update
+  - Phase 5(완료): `dashboard`(포인트 잔액, 이번 주 근무 현황, 포인트 사용, 되돌리기). 캘린더(`history`)와 소정근무일 등록(`mypage`, Phase 3에서 이미 이관)은 dashboard와 별도 페이지로 확인되어 이번 범위 밖. 자동완성은 원본 코드베이스에 애초에 존재하지 않아 이관 대상 없음. `UsePointResult`에 `usedLedgerId` 추가해 되돌리기 기능을 실제로 동작하게 수정(기존엔 dead code)
+  - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 알림 읽음 처리 optimistic update
   - 미결정: Web Push 죽은 코드(`app/lib/push.ts`, 현재 어디서도 미호출) 이관 여부, admin 인증 이원화(`X-Admin-Key` vs `ROLE_ADMIN`) 통합 여부
   - 상세 설계는 `/Users/seon/.claude/plans/mate-front-next-js-react-dynamic-heron.md` 참고(임시 경로, 착수 시 이 TODO 기준으로 재설계할 것)
 

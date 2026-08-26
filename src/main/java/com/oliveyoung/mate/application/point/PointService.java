@@ -92,9 +92,16 @@ public class PointService {
         pointRepository.save(point);
         publishEvents(point);
 
+        UUID usedLedgerId = point.getNewLedgers().stream()
+            .filter(l -> l.getType() == PointLedger.LedgerType.USE)
+            .findFirst()
+            .orElseThrow()
+            .getLedgerId();
+
         return new UsePointResult(
             requestAmount.amount(),
-            point.getBalance().amount()
+            point.getBalance().amount(),
+            usedLedgerId
         );
     }
 
