@@ -55,6 +55,8 @@ public class SignupPageController {
         }
         scheduleService.saveSchedule(new SaveScheduleCommand(crewId, daysOfWeek, startDate, null));
 
-        return "redirect:/login?registered";
+        model.addAttribute("done", true);
+        model.addAttribute("doneInitialPoints", initialPoints == null ? 0L : initialPoints);
+        return "signup";
     }
 }
