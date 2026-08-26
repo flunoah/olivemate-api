@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm mx-4">
+        <div class="text-center mb-8">
+            <div class="text-3xl font-bold text-green-600">🫒 마이자소</div>
+            <p class="text-gray-400 text-sm mt-1">크루 등록</p>
+        </div>
+
+        <p th:if="${error}" th:text="${error}" class="text-red-500 text-sm mb-4"></p>
+
+        <form th:action="@{/admin/crews/new}" method="post" class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">이름</label>
+                <input type="text" name="name" required
+                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600">사번</label>
+                <input type="text" name="loginId" required
+                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600">초기 비밀번호</label>
+                <input type="password" name="password" required
+                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            </div>
+            <button type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition">
+                등록하기
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-400 mt-4">
+            <a th:href="@{/admin}" class="hover:underline">← 크루 목록으로</a>
+        </p>
+    </div>
+</body>
+</html>

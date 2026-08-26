@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-2xl mx-auto p-6">
+        <div class="flex items-center justify-between mb-2">
+            <a th:href="@{/admin}" class="text-sm text-gray-400 hover:text-gray-600">← 크루 목록</a>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>
+            </form>
+        </div>
+        <div class="mb-6">
+            <div class="text-lg font-bold text-gray-800" th:text="${crew.name}"></div>
+            <p class="text-gray-400 text-sm" th:text="${crew.loginId}"></p>
+        </div>
+
+        <div class="flex gap-1 mb-4 bg-white rounded-xl p-1 shadow-sm text-sm">
+            <a th:href="@{/admin/crews/{id}(id=${crew.crewId}, tab='workdays')}"
+               th:class="${activeTab == 'workdays'} ? 'flex-1 text-center py-2 rounded-lg bg-green-600 text-white font-medium' : 'flex-1 text-center py-2 rounded-lg text-gray-500'">근무관리</a>
+            <a th:href="@{/admin/crews/{id}(id=${crew.crewId}, tab='history')}"
+               th:class="${activeTab == 'history'} ? 'flex-1 text-center py-2 rounded-lg bg-green-600 text-white font-medium' : 'flex-1 text-center py-2 rounded-lg text-gray-500'">포인트내역</a>
+            <a th:href="@{/admin/crews/{id}(id=${crew.crewId}, tab='grant')}"
+               th:class="${activeTab == 'grant'} ? 'flex-1 text-center py-2 rounded-lg bg-green-600 text-white font-medium' : 'flex-1 text-center py-2 rounded-lg text-gray-500'">포인트적립</a>
+            <a th:href="@{/admin/crews/{id}(id=${crew.crewId}, tab='info')}"
+               th:class="${activeTab == 'info'} ? 'flex-1 text-center py-2 rounded-lg bg-green-600 text-white font-medium' : 'flex-1 text-center py-2 rounded-lg text-gray-500'">회원정보</a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-6" th:switch="${activeTab}">
+
+            <!-- 근무관리 -->
+            <div th:case="'workdays'">
+                <div class="flex items-center justify-between mb-4">
+                    <a th:href="@{/admin/crews/{id}(id=${crew.crewId}, tab='workdays', year=${month == 1 ? year - 1 : year}, month=${month == 1 ? 12 : month - 1})}"
+                       class="px-2 text-gray-400 hover:text-gray-600">‹</a>
+                    <span class="text-sm font-medium text-gray-700" th:text="${year} + '년 ' + ${month} + '월'"></span>
+                    <a th:href="@{/admin/crews/{id}(id=${crew.crewId}, tab='workdays', year=${month == 12 ? year + 1 : year}, month=${month == 12 ? 1 : month + 1})}"
+                       class="px-2 text-gray-400 hover:text-gray-600">›</a>
+                </div>
+
+                <p th:if="${workdays.isEmpty()}" class="text-gray-400 text-sm text-center py-4">이번 달 근무 기록이 없어요.</p>
+
+                <div th:each="wd : ${workdays}" class="flex items-center justify-between py-2.5 border-t border-gray-100 first:border-t-0">
+                    <span class="text-sm text-gray-700" th:text="${wd.workDate}"></span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs px-2 py-1 rounded-full"
+                              th:text="${wd.statusLabel}"
+                              th:style="'color:' + ${wd.statusColor} + ';background:' + ${wd.statusBg}"></span>
+                        <form th:if="${!wd.skipped}" th:action="@{/admin/crews/{id}/workdays/cancel(id=${crew.crewId})}" method="post">
+                            <input type="hidden" name="workDate" th:value="${wd.workDate}"/>
+                            <input type="hidden" name="year" th:value="${year}"/>
+                            <input type="hidden" name="month" th:value="${month}"/>
+                            <button type="submit" class="text-xs text-gray-400 hover:text-red-500">결근</button>
+                        </form>
+                        <form th:if="${wd.skipped}" th:action="@{/admin/crews/{id}/workdays/reinstate(id=${crew.crewId})}" method="post">
+                            <input type="hidden" name="workDate" th:value="${wd.workDate}"/>
+                            <input type="hidden" name="year" th:value="${year}"/>
+                            <input type="hidden" name="month" th:value="${month}"/>
+                            <button type="submit" class="text-xs text-gray-400 hover:text-green-600">복원</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 포인트내역 -->
+            <div th:case="'history'">
+                <p th:if="${noPointAccount}" class="text-gray-400 text-sm text-center py-4">아직 등록된 포인트 내역이 없어요.</p>
+                <div th:unless="${noPointAccount}">
+                    <div class="bg-green-50 rounded-xl p-4 mb-4 text-center">
+                        <p class="text-xs text-green-600 mb-1">현재 보유 포인트</p>
+                        <p class="text-2xl font-bold text-green-700" th:text="${#numbers.formatInteger(balance.balance, 1, 'COMMA')} + 'P'"></p>
+                    </div>
+                    <p th:if="${ledgers.isEmpty()}" class="text-gray-400 text-sm text-center py-4">내역이 없어요.</p>
+                    <div th:each="l : ${ledgers}" class="flex items-center justify-between py-2.5 border-t border-gray-100 first:border-t-0">
+                        <div>
+                            <span class="text-sm font-medium" th:text="${l.label}" th:style="'color:' + ${l.color}"></span>
+                            <span th:if="${l.description}" class="text-xs text-gray-400 ml-2" th:text="${l.description}"></span>
+                            <p class="text-xs text-gray-400" th:text="${#temporals.format(l.createdAt, 'yyyy-MM-dd')}"></p>
+                        </div>
+                        <span class="text-sm font-medium" th:text="${l.sign} + ${#numbers.formatInteger(l.amount, 1, 'COMMA')} + 'P'" th:style="'color:' + ${l.color}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 포인트적립 -->
+            <div th:case="'grant'">
+                <p th:if="${grantError}" th:text="${grantError}" class="text-red-500 text-sm mb-4"></p>
+
+                <div class="mb-6">
+                    <p class="text-sm font-medium text-gray-700 mb-2">초기 포인트 등록 (최초 1회)</p>
+                    <form th:action="@{/admin/crews/{id}/points/initialize(id=${crew.crewId})}" method="post" class="flex gap-2">
+                        <input type="number" name="amount" min="0" required placeholder="포인트"
+                               class="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 rounded-lg transition">등록</button>
+                    </form>
+                </div>
+
+                <div>
+                    <p class="text-sm font-medium text-gray-700 mb-2">소급 적립 (근무일 지정)</p>
+                    <form th:action="@{/admin/crews/{id}/points/grant-manual(id=${crew.crewId})}" method="post" class="flex gap-2">
+                        <input type="date" name="workDate" required
+                               class="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 rounded-lg transition">적립</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 회원정보 -->
+            <div th:case="'info'">
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between border-b border-gray-100 pb-2">
+                        <span class="text-gray-400">이름</span>
+                        <span class="text-gray-800" th:text="${crew.name}"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-100 pb-2">
+                        <span class="text-gray-400">사번</span>
+                        <span class="text-gray-800" th:text="${crew.loginId}"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">역할</span>
+                        <span class="text-gray-800" th:text="${crew.role}"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

@@ -5,9 +5,12 @@
     <div class="max-w-2xl mx-auto p-6">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-xl font-bold text-gray-800">관리자 - 크루 목록</h1>
-            <form th:action="@{/logout}" method="post">
-                <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>
-            </form>
+            <div class="flex items-center gap-3">
+                <a th:href="@{/admin/crews/new}" class="text-sm text-green-600 font-medium hover:underline">+ 크루 등록</a>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>
+                </form>
+            </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -19,8 +22,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="crew : ${crews}" class="border-t border-gray-100">
-                        <td class="px-4 py-3" th:text="${crew.name}"></td>
+                    <tr th:each="crew : ${crews}" class="border-t border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <a th:href="@{/admin/crews/{id}(id=${crew.crewId})}" th:text="${crew.name}" class="text-gray-800 hover:text-green-600"></a>
+                        </td>
                         <td class="px-4 py-3 text-gray-500" th:text="${crew.loginId}"></td>
                     </tr>
                     <tr th:if="${crews.isEmpty()}">
