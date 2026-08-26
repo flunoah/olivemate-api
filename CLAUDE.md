@@ -60,7 +60,7 @@ cd mate-front && npm run dev
 
 - 근무일은 `소정근무일`(정기)과 `연장근무`(비정기)로 나뉜다. `skipped=true`면 결근 처리되어 적립되지 않는다.
 - 모든 날짜·배치 기준 시각은 `ZoneId.of("Asia/Seoul")`.
-- **요일 번호 규약이 서버와 프론트에서 다르다.** 서버는 1=월~7=일, JS `Date.getDay()`는 0=일~6=토. 프론트에서 `serverDayToJsDay()`로 변환 필수.
+- **요일 번호는 `CrewSchedule.daysOfWeek`(`List<Integer>`) 기준 0=일~6=토** — JS `Date.getDay()`와 동일해 별도 변환이 필요 없다.
 
 ### File Processing Pipeline
 

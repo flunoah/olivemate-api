@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>마이자소</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm mx-4">
+        <div class="text-center mb-8">
+            <div class="text-3xl font-bold text-green-600">🫒 마이자소</div>
+            <p class="text-gray-400 text-sm mt-1">회원가입</p>
+        </div>
+
+        <p th:if="${error}" th:text="${error}" class="text-red-500 text-sm mb-4"></p>
+
+        <!-- th:action 폼에는 Spring Security의 RequestDataValueProcessor가 CSRF 히든 필드를 자동 삽입함 -->
+        <form th:action="@{/signup}" method="post" class="space-y-4">
+            <fieldset id="step-1" class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">이름</label>
+                    <input type="text" name="name" required
+                           class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">사번</label>
+                    <input type="text" name="loginId" required
+                           class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">비밀번호</label>
+                    <input type="password" name="password" required
+                           class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <button type="button" onclick="showStep(2)"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition">
+                    다음
+                </button>
+            </fieldset>
+
+            <fieldset id="step-2" class="space-y-4 hidden">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">초기 보유 포인트 (중도입사자만, 선택)</label>
+                    <input type="number" name="initialPoints" min="0"
+                           class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="showStep(1)"
+                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-lg transition">
+                        이전
+                    </button>
+                    <button type="button" onclick="showStep(3)"
+                            class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition">
+                        다음
+                    </button>
+                </div>
+            </fieldset>
+
+            <fieldset id="step-3" class="space-y-4 hidden">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">소정근무일</label>
+                    <div class="grid grid-cols-7 gap-2 text-center text-sm mt-1">
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="0"/><span>일</span>
+                        </label>
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="1"/><span>월</span>
+                        </label>
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="2"/><span>화</span>
+                        </label>
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="3"/><span>수</span>
+                        </label>
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="4"/><span>목</span>
+                        </label>
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="5"/><span>금</span>
+                        </label>
+                        <label class="flex flex-col items-center gap-1">
+                            <input type="checkbox" name="daysOfWeek" value="6"/><span>토</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">적용일</label>
+                    <input type="date" name="startDate" required
+                           class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="showStep(2)"
+                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-lg transition">
+                        이전
+                    </button>
+                    <button type="submit"
+                            class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition">
+                        가입하기
+                    </button>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+
+    <script>
+        function showStep(n) {
+            [1, 2, 3].forEach(function (i) {
+                document.getElementById('step-' + i).classList.toggle('hidden', i !== n);
+            });
+        }
+    </script>
+</body>
+</html>
