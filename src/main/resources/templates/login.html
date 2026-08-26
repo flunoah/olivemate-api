@@ -6,34 +6,35 @@
     <title>마이자소</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm mx-4">
-        <div class="text-center mb-8">
-            <div class="text-3xl font-bold text-green-600">🫒 마이자소</div>
-            <p class="text-gray-400 text-sm mt-1">마이자소로 자소 조회하자!</p>
-        </div>
+<body class="bg-[#F4F6F1] min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-sm mx-4 flex flex-col">
+        <div class="w-14 h-14 rounded-2xl bg-brand text-brand-ink flex items-center justify-center text-2xl font-extrabold mb-5">마</div>
+        <div class="text-3xl font-extrabold tracking-tight mb-1.5">마이자소</div>
+        <p class="text-gray-500 text-sm font-semibold mb-9">올리브영 크루 근무·포인트 관리</p>
 
         <!-- th:action 폼에는 Spring Security의 RequestDataValueProcessor가 CSRF 히든 필드를 자동 삽입함 -->
-        <form th:action="@{/login}" method="post" class="space-y-4">
-            <div>
-                <label class="text-sm font-medium text-gray-600">사번</label>
-                <input type="text" name="loginId" placeholder="사번을 입력하세요"
-                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
-            </div>
-            <div>
-                <label class="text-sm font-medium text-gray-600">비밀번호</label>
-                <input type="password" name="password" placeholder="비밀번호를 입력하세요"
-                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
-            </div>
+        <form th:action="@{/login}" method="post" class="space-y-3">
+            <input type="text" name="loginId" placeholder="사번"
+                   class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+            <input type="password" name="password" placeholder="비밀번호"
+                   class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
 
             <p th:if="${error}" th:text="${error}" class="text-red-500 text-sm"></p>
-            <p th:if="${message}" th:text="${message}" class="text-green-600 text-sm"></p>
+            <p th:if="${message}" th:text="${message}" class="text-brand-strong text-sm"></p>
 
             <button type="submit"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition">
+                    class="w-full h-[52px] bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition mt-3">
                 로그인
             </button>
         </form>
+
+        <p class="text-center text-sm font-semibold text-gray-400 mt-4">
+            처음이신가요? <a href="/signup" class="text-brand-strong font-bold underline">크루 등록하기</a>
+        </p>
+
+        <p class="text-center text-xs text-gray-400 font-semibold leading-relaxed mt-8">
+            사번·비밀번호는 매장 관리자에게 받은 값을 사용하세요
+        </p>
     </div>
 </body>
 </html>
