@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>마이자소</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm mx-4">
+        <div class="text-center mb-8">
+            <div class="text-3xl font-bold text-green-600">🫒 마이자소</div>
+            <p class="text-gray-400 text-sm mt-1">마이자소로 자소 조회하자!</p>
+        </div>
+
+        <!-- th:action 폼에는 Spring Security의 RequestDataValueProcessor가 CSRF 히든 필드를 자동 삽입함 -->
+        <form th:action="@{/login}" method="post" class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">사번</label>
+                <input type="text" name="loginId" placeholder="사번을 입력하세요"
+                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600">비밀번호</label>
+                <input type="password" name="password" placeholder="비밀번호를 입력하세요"
+                       class="mt-1 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            </div>
+
+            <p th:if="${error}" th:text="${error}" class="text-red-500 text-sm"></p>
+            <p th:if="${message}" th:text="${message}" class="text-green-600 text-sm"></p>
+
+            <button type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition">
+                로그인
+            </button>
+        </form>
+    </div>
+</body>
+</html>

@@ -41,3 +41,6 @@ out/
 
 ### env ###
 .env
+
+### tailwind (Gradle tailwindBuild가 생성, 커밋 대상 아님) ###
+/src/main/resources/static/css/app.css

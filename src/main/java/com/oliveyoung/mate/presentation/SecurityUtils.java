@@ -1,5 +1,6 @@
 package com.oliveyoung.mate.presentation;
 
+import com.oliveyoung.mate.infrastructure.crew.auth.CrewPrincipal;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,7 +11,8 @@ public final class SecurityUtils {
     private SecurityUtils() {}
 
     public static UUID authenticatedCrewId() {
-        return (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return ((CrewPrincipal) auth.getPrincipal()).getCrewId();
     }
 
     // ADMIN만 허용
@@ -26,7 +28,7 @@ public final class SecurityUtils {
     // 본인 또는 ADMIN만 허용
     public static void validateSelfOrAdmin(UUID requestedCrewId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UUID authenticatedId = (UUID) auth.getPrincipal();
+        UUID authenticatedId = ((CrewPrincipal) auth.getPrincipal()).getCrewId();
         boolean isAdmin = auth.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         if (!isAdmin && !authenticatedId.equals(requestedCrewId)) {
