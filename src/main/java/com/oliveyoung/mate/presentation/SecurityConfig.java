@@ -1,10 +1,14 @@
 package com.oliveyoung.mate.presentation;
 
+import com.oliveyoung.mate.infrastructure.crew.auth.CrewUserDetailsService;
 import com.oliveyoung.mate.infrastructure.crew.auth.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,9 +31,15 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    /**
+     * 기존 JWT bearer API 전용 체인. mate-front(Next.js)가 컷오버 전까지 계속 의존하므로
+     * 마이그레이션 이전과 동작이 동일해야 한다 — session/CSRF 관련 설정을 일체 건드리지 않는다.
+     */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
+            .securityMatcher("/api/v1/**")
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
@@ -39,7 +49,6 @@ public class SecurityConfig {
                 .authenticationEntryPoint(unauthorizedEntryPoint())
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/health").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").permitAll()
                 .anyRequest().authenticated()
@@ -48,6 +57,39 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * Thymeleaf 페이지 전용 세션 기반 체인. /api/v1/** 이외의 모든 요청이 여기로 떨어진다.
+     */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/health", "/login", "/css/**", "/js/**", "/webjars/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .usernameParameter("loginId")
+                .defaultSuccessUrl("/login?success", true)
+                .failureUrl("/login?error")
+            )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(
+            CrewUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
     }
 
     @Bean

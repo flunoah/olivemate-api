@@ -24,15 +24,22 @@
 - [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
 - [ ] `[BE]` 응답 포맷 통일 (`ApiResponse` 래핑 여부)
 - [ ] `[FE]` ESLint 도입 (`lint` 스크립트 부재)
-- [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요) + `npm run build`(프론트)
+- [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요) + `npm run build`(프론트). 확장 시 CI 러너에 [Tailwind standalone CLI](https://github.com/tailwindlabs/tailwindcss/releases) 바이너리도 설치 필요(`processResources`가 `tailwindBuild`에 의존)
 
 ## 📦 Backlog — 신규 기능
 
 - [ ] 제품명 자동완성/추천 (LLM)
 - [ ] 버그 제보 LLM triage
+- [ ] **프론트엔드 스택 전환(Phase 1+): `mate-front`(Next.js/React SPA) → `mate` 내 Thymeleaf + htmx.** SEO 불필요 + 백엔드(Java/Spring) 스택 활용도를 높이려는 목적. Phase 0(세션 인증 기반)은 완료(Done 참고). 병행 운영 없이 사용자 노출은 한 번에 전환하되, 코드는 phase마다 짧은 브랜치로 `main` merge + 배포(네비게이션은 전체 이관 완료 전까지 그대로 Next.js를 가리킴).
+  - Phase 1(다음 단계): 작고 읽기 위주인 `notifications` 페이지 하나를 끝까지 이관해 컨트롤러/템플릿/htmx 패턴 확립
+  - Phase 2+: `admin/login` → `mypage`/`signup` → `admin` → `dashboard` 순
+  - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 대시보드 되돌리기 10초 카운트다운, 알림 읽음 처리 optimistic update
+  - 미결정: Web Push 죽은 코드(`app/lib/push.ts`, 현재 어디서도 미호출) 이관 여부, admin 인증 이원화(`X-Admin-Key` vs `ROLE_ADMIN`) 통합 여부
+  - 상세 설계는 `/Users/seon/.claude/plans/mate-front-next-js-react-dynamic-heron.md` 참고(임시 경로, 착수 시 이 TODO 기준으로 재설계할 것)
 
 ## ✅ Done
 
+- [x] `[BE]` Thymeleaf+htmx 마이그레이션 Phase 0(세션 기반 인증 전환) — `spring-boot-starter-thymeleaf` 추가. `/api/v1/**`는 기존 stateless JWT `SecurityFilterChain`을 그대로 유지(회귀 없음, `mate-front`가 컷오버 전까지 계속 의존), 신규 `/login` 페이지는 별도 세션 기반 `SecurityFilterChain`(폼 로그인 + CSRF + 로그아웃, `@Order`로 두 체인 분리)으로 구성. `CrewPrincipal`(`UserDetails`)로 JWT/세션 두 인증 경로의 principal 타입 통일, `SecurityUtils`도 갱신. 디자인은 Tailwind CSS(Node 없이 standalone CLI + Gradle `tailwindBuild` 태스크)로 `mate-front`와 동일한 클래스 재사용
 - [x] 소멸 임박 알림 (D-7/D-3/D-1) — `PointExpiryReminderScheduler`(매일 07:00 KST) → `PointService.remindExpiringPoints()` → `PointExpiringEvent` → `PointExpiringNotificationListener`(기존 `PointEarnedNotificationListener`와 동일 패턴)가 인앱 알림 저장 + 웹푸시 발송. 겸사겸사 `Notification.pointEarned()`/`WebPushClient`의 잘못된 deepLink(`/points/history` → `/history`, 존재하지 않는 라우트였음)도 수정
 - [x] 인앱 알림 리스트 UI — `app/notifications/page.tsx` 신규, 대시보드 헤더 종 아이콘(안 읽음 뱃지 포함)에서 진입
 - [x] `[BE]` `WebPushClient`의 `catch (Exception)` 세분화. `HttpResponse` 상태 코드(404/410)로만 구독 삭제, 그 외 일시적 오류(`IOException`/`ExecutionException`/`InterruptedException`)·설정 오류(`GeneralSecurityException`/`JoseException`)는 로그만 남기고 구독 유지

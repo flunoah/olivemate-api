@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:fragment="head">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="_csrf" th:content="${_csrf.token}"/>
+        <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+        <link rel="stylesheet" th:href="@{/css/app.css}">
+        <script>
+            document.addEventListener('htmx:configRequest', function (e) {
+                var header = document.querySelector('meta[name="_csrf_header"]').content;
+                var token = document.querySelector('meta[name="_csrf"]').content;
+                e.detail.headers[header] = token;
+            });
+        </script>
+    </th:block>
+</head>
+<body>
+    <nav th:fragment="nav"
+         class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-100 flex z-50">
+        <a href="/dashboard" class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-green-600 transition">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>
+            <span class="text-xs mt-0.5">홈</span>
+        </a>
+        <a href="/history" class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-green-600 transition">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            <span class="text-xs mt-0.5">내역</span>
+        </a>
+        <a href="/mypage" class="flex-1 flex flex-col items-center py-3 text-gray-400 hover:text-green-600 transition">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span class="text-xs mt-0.5">내 주소정</span>
+        </a>
+    </nav>
+</body>
+</html>
