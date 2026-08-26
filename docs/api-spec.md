@@ -127,10 +127,10 @@ FIFO 차감. `validateSelfOrAdmin`
 
 **응답** `200` — `UsePointResult`
 ```json
-{ "usedAmount": 3000, "balance": 10100 }
+{ "usedAmount": 3000, "remainingBalance": 10100, "usedLedgerId": "b3c1..." }
 ```
 
-> **프론트 주의**: `DashboardPage`가 `data.ledgerId ?? data.id`로 취소용 ID를 찾지만, **`UsePointResult`에는 해당 필드가 없다.** 현재 되돌리기(Undo) 토스트가 뜨지 않고 일반 성공 토스트로 폴백된다. 되돌리기를 살리려면 `UsePointResult`에 `txId` 추가가 필요하다.
+- `usedLedgerId`는 이번 사용으로 생성된 `USE` 원장 중 하나의 ID. `POST /api/v1/points/cancel`의 `ledgerId`로 그대로 사용하면 같은 `txId`로 묶인 사용 건 전체가 취소된다.
 
 **에러**
 | 상황 | 상태 | code |
@@ -442,7 +442,6 @@ function apiErrorMessage(status: number): string {
 |---|---|---|
 | 응답 포맷 | `ApiResponse` 래핑 여부가 컨트롤러마다 다름 | 프론트가 `res.data ?? res`로 방어 |
 | 성공 응답 타입 | 일부는 평문 문자열(`"등록 완료!"`) 반환 | JSON 파싱 시 주의 필요 |
-| `UsePointResult` | `ledgerId`/`txId` 없음 | 프론트 Undo 기능 동작 불가 |
 | 관리자 인증 | `X-Admin-Key`와 `ROLE_ADMIN` 혼용 | 신규 엔드포인트 추가 시 혼란 |
 | 취소 API | `txId` 단위 처리인데 프론트는 `ledgerId`별 반복 호출 | 두 번째 호출부터 실패 |
 | 알림 조회 API | 구현됐으나 프론트 미사용 | Push 실패 시 알림 유실 |

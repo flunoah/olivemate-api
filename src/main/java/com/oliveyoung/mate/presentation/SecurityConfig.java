@@ -88,14 +88,14 @@ public class SecurityConfig {
 
     /**
      * 로그인 성공 시 계정 역할에 따라 목적지를 분기한다.
-     * ADMIN은 /admin, 그 외 크루는 현재 유일하게 이관된 크루용 페이지인 /notifications로 이동.
+     * ADMIN은 /admin, 그 외 크루는 홈 역할의 /dashboard로 이동.
      */
     @Bean
     public AuthenticationSuccessHandler roleBasedSuccessHandler() {
         return (request, response, authentication) -> {
             boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            response.sendRedirect(isAdmin ? "/admin" : "/notifications");
+            response.sendRedirect(isAdmin ? "/admin" : "/dashboard");
         };
     }
 

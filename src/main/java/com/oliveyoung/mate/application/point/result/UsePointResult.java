@@ -1,6 +1,9 @@
 package com.oliveyoung.mate.application.point.result;
 
+import java.util.UUID;
+
 public record UsePointResult(
     long usedAmount,
-    long remainingBalance
+    long remainingBalance,
+    UUID usedLedgerId
 ) {}
