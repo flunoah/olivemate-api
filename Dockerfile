@@ -9,6 +9,13 @@ COPY settings.gradle .
 RUN chmod +x gradlew
 RUN ./gradlew dependencies --no-daemon
 
+# Tailwind CSS standalone CLI (Node 없이 build.gradle의 tailwindBuild 태스크가 사용)
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -sL -o /usr/local/bin/tailwindcss \
+        https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 \
+    && chmod +x /usr/local/bin/tailwindcss \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY src src
 RUN ./gradlew bootJar --no-daemon
 
