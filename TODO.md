@@ -41,7 +41,10 @@
   - Phase 4(완료): `/admin` CRUD 확장(근무관리·포인트내역·포인트적립·회원정보·크루등록)
   - Phase 5(완료): `dashboard`(포인트 잔액, 이번 주 근무 현황, 포인트 사용, 되돌리기). 캘린더(`history`)와 소정근무일 등록(`mypage`, Phase 3에서 이미 이관)은 dashboard와 별도 페이지로 확인되어 이번 범위 밖. 자동완성은 원본 코드베이스에 애초에 존재하지 않아 이관 대상 없음. `UsePointResult`에 `usedLedgerId` 추가해 되돌리기 기능을 실제로 동작하게 수정(기존엔 dead code)
   - Phase 6(완료): `history`(캘린더 — 달력 그리드, 표시 월 요약, 만료 임박 배너, 날짜 클릭 상세, 당일 사용 건 취소, 지난달 적립 내역). `LedgerHistoryResult`에 `ledgerId`/`txId` 추가해 취소 기능을 실제로 동작하게 수정(기존 Next.js FE는 없는 `l.id`를 읽으려 해 취소 버튼이 항상 죽어 있었음 — `mergedIds`가 매번 빈 배열). 알림 딥링크(`/history?date=`)가 그대로 이 페이지로 연결되어 TODO의 "알림 딥링크 `?date=` 파라미터 처리" 항목도 함께 해결됨
-  - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 알림 읽음 처리 optimistic update
+  - [x] `hx-boost`로 페이지 전환 무깜빡임 유지 — 하단 탭 내비게이션(`dashboard`/`history`/`notifications`/`mypage`)에 한해 적용(`fragments/layout.html`의 `nav` 프래그먼트). 로그인/회원가입/관리자 페이지는 폼 제출 위주라 boost 범위에서 제외
+  - [x] 알림 읽음 처리 optimistic update — 클릭 즉시 읽음 스타일로 전환(`htmx:beforeRequest`), 실제 리다이렉트는 기존대로 서버 응답 후 진행
+  - 재구현 필요(자동으로 안 따라옴, 이번 phase 밖): `TopProgressBar` 단계별 페이크 프로그레스
+  - (참고) Web Push 죽은 코드 이관, admin 인증 이원화 통합은 별도 미해결 항목이 아니라 Phase 7에서 이미 해결됨 — 아래 참고
   - Phase 7(완료): **최종 컷오버.** `SecurityConfig`를 `webFilterChain` 단일 체인으로 축소 — CORS 설정 전면 제거, `JwtAuthFilter`/`JwtProvider`/`TokenProvider` 삭제, `CrewService.signUp()`에서 토큰 발급 제거(`login()`/`refresh()`도 삭제). mate-front 전용이었던 `/api/v1/{auth,attendance,schedule,point,notification}` REST 컨트롤러 삭제, `AdminController`의 `ROLE_ADMIN` 기반 `getCrews`/`getWorkDays`도 삭제(admin 인증 이원화 문제는 이렇게 X-Admin-Key 단일화로 해결). `PushSubscriptionController`를 `/api/v1/push`→`/push`로 옮겨 세션 인증 체계에 편입, Web Push 구독/해지 UI+서비스워커를 `mypage.html`로 이관(그동안 "미결정"이던 항목 해결). 루트(`/`) 경로가 없던 문제도 `RootController` 추가로 해결(역할별 리다이렉트). mate-front는 `next.config.ts`를 전체 경로→백엔드 302 리다이렉트로 교체하는 최소 배포만 남기고 은퇴
   - 상세 설계는 `/Users/seon/.claude/plans/kind-meandering-pike.md` 참고
 

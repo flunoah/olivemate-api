@@ -27,6 +27,17 @@
         </div>
     </main>
 
+    <script>
+        document.body.addEventListener('htmx:beforeRequest', function (e) {
+            var el = e.detail.elt;
+            if (!el.matches('[hx-patch*="/read"]')) return;
+            el.classList.replace('bg-[#F0FFF4]', 'bg-white');
+            el.classList.replace('border-green-200', 'border-gray-200');
+            var dot = el.querySelector('.bg-red-500');
+            if (dot) dot.remove();
+        });
+    </script>
+
     <nav th:replace="~{fragments/layout :: nav}"></nav>
 </body>
 </html>
