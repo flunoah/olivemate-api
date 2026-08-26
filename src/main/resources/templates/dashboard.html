@@ -141,8 +141,13 @@
                 <input type="date" name="usedAt" class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
                 <input type="number" name="amount" min="1" required placeholder="사용 포인트"
                        class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                <input type="text" name="productName" required placeholder="제품명 입력"
-                       class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+                <div class="relative">
+                    <input type="text" name="productName" id="productName" required placeholder="제품명 입력" autocomplete="off"
+                           hx-get="/products/search" hx-trigger="keyup changed delay:300ms" hx-target="#productSearchResults"
+                           class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+                    <div id="productSearchResults"></div>
+                </div>
+                <input type="hidden" name="brand" id="productBrand"/>
                 <button type="submit" class="w-full h-[52px] bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">사용하기</button>
             </form>
             <button type="button" onclick="closeSheet('pointsSheet')"
@@ -155,6 +160,14 @@
     <script>
         function openSheet(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
+
+        document.getElementById('productSearchResults').addEventListener('click', function (e) {
+            var item = e.target.closest('.product-search-item');
+            if (!item) return;
+            document.getElementById('productName').value = item.dataset.name;
+            document.getElementById('productBrand').value = item.dataset.brand;
+            document.getElementById('productSearchResults').innerHTML = '';
+        });
     </script>
 
     <script th:if="${pendingUndo}">

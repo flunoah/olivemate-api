@@ -55,6 +55,29 @@ CrewCheck 백엔드 REST API 명세.
 
 ---
 
+## 상품 자동완성 / 관리
+
+세션 인증(`anyRequest().authenticated()`) 기반. Thymeleaf+htmx 페이지가 소비하며 JSON이 아닌 HTML 프래그먼트를 반환한다.
+
+### GET /products/search
+
+`ProductSearchPageController`. `/dashboard`의 포인트 사용 폼에서 `productName` 입력 시 htmx로 호출(`keyup changed delay:300ms`).
+
+**쿼리**: `?productName={검색어}` (공백/빈 값이면 빈 목록)
+**응답** `200` — `fragments/product-search-results :: results` HTML 프래그먼트 (최대 20건, 상품명 오름차순)
+
+### GET /admin/products
+
+`AdminProductPageController`. 세션 `ROLE_ADMIN` 필요(`/admin/**`). 엑셀 업로드 폼 페이지.
+
+### POST /admin/products/upload
+
+**요청**: `multipart/form-data`, 필드명 `file` (xlsx/xls, 최대 10MB). 열 순서: 상품코드/브랜드/상품명/정가/판매가, 1행은 헤더로 스킵.
+**동작**: `goodsNo` 기준 upsert. 행 단위 파싱 실패는 스킵하고 나머지는 계속 처리.
+**응답**: `redirect:/admin/products` + flash attribute `result`(`ProductUploadResult(total, synced, failed)`) 또는 `error`.
+
+---
+
 ## Health
 
 ### GET /health

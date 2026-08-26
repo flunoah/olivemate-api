@@ -70,6 +70,7 @@
                 <div>
                     <span class="text-sm" th:text="${l.icon} + ' ' + ${l.label}"></span>
                     <span th:if="${l.description}" class="text-xs text-gray-400 ml-1" th:text="${l.description}"></span>
+                    <span th:if="${l.brand}" class="text-xs text-gray-300 ml-1" th:text="'· ' + ${l.brand}"></span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-sm font-medium" th:text="${l.sign} + ${#numbers.formatInteger(l.amount, 1, 'COMMA')} + 'P'"

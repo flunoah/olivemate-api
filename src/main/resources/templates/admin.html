@@ -6,6 +6,7 @@
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-xl font-bold text-gray-800">관리자 - 크루 목록</h1>
             <div class="flex items-center gap-3">
+                <a th:href="@{/admin/products}" class="text-sm text-green-600 font-medium hover:underline">상품 관리</a>
                 <a th:href="@{/admin/crews/new}" class="text-sm text-green-600 font-medium hover:underline">+ 크루 등록</a>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>

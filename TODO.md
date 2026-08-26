@@ -32,7 +32,6 @@
 
 ## 📦 Backlog — 신규 기능
 
-- [ ] 제품명 자동완성/추천 (LLM)
 - [ ] 버그 제보 LLM triage
 - [ ] **프론트엔드 스택 전환(Phase 1+): `mate-front`(Next.js/React SPA) → `mate` 내 Thymeleaf + htmx.** SEO 불필요 + 백엔드(Java/Spring) 스택 활용도를 높이려는 목적. Phase 0(세션 인증 기반)은 완료(Done 참고). 병행 운영 없이 사용자 노출은 한 번에 전환하되, 코드는 phase마다 짧은 브랜치로 `main` merge + 배포(네비게이션은 전체 이관 완료 전까지 그대로 Next.js를 가리킴).
   - Phase 1(완료): 작고 읽기 위주인 `notifications` 페이지 하나를 끝까지 이관해 컨트롤러/템플릿/htmx 패턴 확립
@@ -41,12 +40,16 @@
   - Phase 4(완료): `/admin` CRUD 확장(근무관리·포인트내역·포인트적립·회원정보·크루등록)
   - Phase 5(완료): `dashboard`(포인트 잔액, 이번 주 근무 현황, 포인트 사용, 되돌리기). 캘린더(`history`)와 소정근무일 등록(`mypage`, Phase 3에서 이미 이관)은 dashboard와 별도 페이지로 확인되어 이번 범위 밖. 자동완성은 원본 코드베이스에 애초에 존재하지 않아 이관 대상 없음. `UsePointResult`에 `usedLedgerId` 추가해 되돌리기 기능을 실제로 동작하게 수정(기존엔 dead code)
   - Phase 6(완료): `history`(캘린더 — 달력 그리드, 표시 월 요약, 만료 임박 배너, 날짜 클릭 상세, 당일 사용 건 취소, 지난달 적립 내역). `LedgerHistoryResult`에 `ledgerId`/`txId` 추가해 취소 기능을 실제로 동작하게 수정(기존 Next.js FE는 없는 `l.id`를 읽으려 해 취소 버튼이 항상 죽어 있었음 — `mergedIds`가 매번 빈 배열). 알림 딥링크(`/history?date=`)가 그대로 이 페이지로 연결되어 TODO의 "알림 딥링크 `?date=` 파라미터 처리" 항목도 함께 해결됨
-  - 재구현 필요(자동으로 안 따라옴): `hx-boost`로 페이지 전환 무깜빡임 유지, `TopProgressBar` 단계별 페이크 프로그레스, 알림 읽음 처리 optimistic update
+  - [x] `hx-boost`로 페이지 전환 무깜빡임 유지 — 하단 탭 내비게이션(`dashboard`/`history`/`notifications`/`mypage`)에 한해 적용(`fragments/layout.html`의 `nav` 프래그먼트). 로그인/회원가입/관리자 페이지는 폼 제출 위주라 boost 범위에서 제외
+  - [x] 알림 읽음 처리 optimistic update — 클릭 즉시 읽음 스타일로 전환(`htmx:beforeRequest`), 실제 리다이렉트는 기존대로 서버 응답 후 진행
+  - 재구현 필요(자동으로 안 따라옴, 이번 phase 밖): `TopProgressBar` 단계별 페이크 프로그레스
+  - (참고) Web Push 죽은 코드 이관, admin 인증 이원화 통합은 별도 미해결 항목이 아니라 Phase 7에서 이미 해결됨 — 아래 참고
   - Phase 7(완료): **최종 컷오버.** `SecurityConfig`를 `webFilterChain` 단일 체인으로 축소 — CORS 설정 전면 제거, `JwtAuthFilter`/`JwtProvider`/`TokenProvider` 삭제, `CrewService.signUp()`에서 토큰 발급 제거(`login()`/`refresh()`도 삭제). mate-front 전용이었던 `/api/v1/{auth,attendance,schedule,point,notification}` REST 컨트롤러 삭제, `AdminController`의 `ROLE_ADMIN` 기반 `getCrews`/`getWorkDays`도 삭제(admin 인증 이원화 문제는 이렇게 X-Admin-Key 단일화로 해결). `PushSubscriptionController`를 `/api/v1/push`→`/push`로 옮겨 세션 인증 체계에 편입, Web Push 구독/해지 UI+서비스워커를 `mypage.html`로 이관(그동안 "미결정"이던 항목 해결). 루트(`/`) 경로가 없던 문제도 `RootController` 추가로 해결(역할별 리다이렉트). mate-front는 `next.config.ts`를 전체 경로→백엔드 302 리다이렉트로 교체하는 최소 배포만 남기고 은퇴
   - 상세 설계는 `/Users/seon/.claude/plans/kind-meandering-pike.md` 참고
 
 ## ✅ Done
 
+- [x] 제품명 자동완성/추천 — LLM이 아니라 상품 카탈로그(`product` 테이블, 엑셀 업로드로 관리자가 동기화) 대상 키워드 검색(`LIKE`, 최대 20건)으로 구현. `/dashboard` 포인트 사용 폼에서 htmx 라이브서치(입력 후 300ms)로 상품명 자동완성 + 선택 시 브랜드를 `point_ledger.brand`(`V4`)에 저장, `/history`에서 브랜드 표시. 관리자 엑셀 업로드는 `/admin/products`(세션 `ROLE_ADMIN`)
 - [x] `[BE]` Thymeleaf+htmx 마이그레이션 Phase 0(세션 기반 인증 전환) — `spring-boot-starter-thymeleaf` 추가. `/api/v1/**`는 기존 stateless JWT `SecurityFilterChain`을 그대로 유지(회귀 없음, `mate-front`가 컷오버 전까지 계속 의존), 신규 `/login` 페이지는 별도 세션 기반 `SecurityFilterChain`(폼 로그인 + CSRF + 로그아웃, `@Order`로 두 체인 분리)으로 구성. `CrewPrincipal`(`UserDetails`)로 JWT/세션 두 인증 경로의 principal 타입 통일, `SecurityUtils`도 갱신. 디자인은 Tailwind CSS(Node 없이 standalone CLI + Gradle `tailwindBuild` 태스크)로 `mate-front`와 동일한 클래스 재사용
 - [x] 소멸 임박 알림 (D-7/D-3/D-1) — `PointExpiryReminderScheduler`(매일 07:00 KST) → `PointService.remindExpiringPoints()` → `PointExpiringEvent` → `PointExpiringNotificationListener`(기존 `PointEarnedNotificationListener`와 동일 패턴)가 인앱 알림 저장 + 웹푸시 발송. 겸사겸사 `Notification.pointEarned()`/`WebPushClient`의 잘못된 deepLink(`/points/history` → `/history`, 존재하지 않는 라우트였음)도 수정
 - [x] 인앱 알림 리스트 UI — `app/notifications/page.tsx` 신규, 대시보드 헤더 종 아이콘(안 읽음 뱃지 포함)에서 진입

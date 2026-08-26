@@ -106,11 +106,12 @@ public class DashboardPageController {
             @RequestParam long amount,
             @RequestParam String productName,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate usedAt,
+            @RequestParam(required = false) String brand,
             RedirectAttributes redirectAttributes) {
         UUID crewId = SecurityUtils.authenticatedCrewId();
         try {
             UsePointResult result = pointService.use(
-                new UsePointCommand(crewId, amount, productName, usedAt));
+                new UsePointCommand(crewId, amount, productName, usedAt, brand));
             redirectAttributes.addFlashAttribute("pendingUndo",
                 new UndoView(result.usedLedgerId(), result.usedAmount(), productName));
         } catch (InsufficientPointException | PointAccountNotFoundException e) {
