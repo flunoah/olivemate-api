@@ -69,7 +69,7 @@ public class Point {
     }
 
     // ── 포인트 사용 (FIFO) ─────────────────────────
-    public void use(Money requestAmount, UUID txId, LocalDateTime usedAt, String description) {
+    public void use(Money requestAmount, UUID txId, LocalDateTime usedAt, String description, String brand) {
         validateBalance(requestAmount);
 
         Money remaining = requestAmount;
@@ -89,7 +89,7 @@ public class Point {
                 ? remaining : earn.getRemaining();
             earn.deduct(deduct);
             dirtyLedgerIds.add(earn.getLedgerId());
-            PointLedger useLedger = PointLedger.use(crewId, txId, deduct, usedAt, description);
+            PointLedger useLedger = PointLedger.use(crewId, txId, deduct, usedAt, description, brand);
             ledgers.add(useLedger);
             newLedgers.add(useLedger);
             remaining = remaining.subtract(deduct);

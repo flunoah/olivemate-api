@@ -32,7 +32,6 @@
 
 ## 📦 Backlog — 신규 기능
 
-- [ ] 제품명 자동완성/추천 (LLM)
 - [ ] 버그 제보 LLM triage
 - [ ] **프론트엔드 스택 전환(Phase 1+): `mate-front`(Next.js/React SPA) → `mate` 내 Thymeleaf + htmx.** SEO 불필요 + 백엔드(Java/Spring) 스택 활용도를 높이려는 목적. Phase 0(세션 인증 기반)은 완료(Done 참고). 병행 운영 없이 사용자 노출은 한 번에 전환하되, 코드는 phase마다 짧은 브랜치로 `main` merge + 배포(네비게이션은 전체 이관 완료 전까지 그대로 Next.js를 가리킴).
   - Phase 1(완료): 작고 읽기 위주인 `notifications` 페이지 하나를 끝까지 이관해 컨트롤러/템플릿/htmx 패턴 확립
@@ -50,6 +49,7 @@
 
 ## ✅ Done
 
+- [x] 제품명 자동완성/추천 — LLM이 아니라 상품 카탈로그(`product` 테이블, 엑셀 업로드로 관리자가 동기화) 대상 키워드 검색(`LIKE`, 최대 20건)으로 구현. `/dashboard` 포인트 사용 폼에서 htmx 라이브서치(입력 후 300ms)로 상품명 자동완성 + 선택 시 브랜드를 `point_ledger.brand`(`V4`)에 저장, `/history`에서 브랜드 표시. 관리자 엑셀 업로드는 `/admin/products`(세션 `ROLE_ADMIN`)
 - [x] `[BE]` Thymeleaf+htmx 마이그레이션 Phase 0(세션 기반 인증 전환) — `spring-boot-starter-thymeleaf` 추가. `/api/v1/**`는 기존 stateless JWT `SecurityFilterChain`을 그대로 유지(회귀 없음, `mate-front`가 컷오버 전까지 계속 의존), 신규 `/login` 페이지는 별도 세션 기반 `SecurityFilterChain`(폼 로그인 + CSRF + 로그아웃, `@Order`로 두 체인 분리)으로 구성. `CrewPrincipal`(`UserDetails`)로 JWT/세션 두 인증 경로의 principal 타입 통일, `SecurityUtils`도 갱신. 디자인은 Tailwind CSS(Node 없이 standalone CLI + Gradle `tailwindBuild` 태스크)로 `mate-front`와 동일한 클래스 재사용
 - [x] 소멸 임박 알림 (D-7/D-3/D-1) — `PointExpiryReminderScheduler`(매일 07:00 KST) → `PointService.remindExpiringPoints()` → `PointExpiringEvent` → `PointExpiringNotificationListener`(기존 `PointEarnedNotificationListener`와 동일 패턴)가 인앱 알림 저장 + 웹푸시 발송. 겸사겸사 `Notification.pointEarned()`/`WebPushClient`의 잘못된 deepLink(`/points/history` → `/history`, 존재하지 않는 라우트였음)도 수정
 - [x] 인앱 알림 리스트 UI — `app/notifications/page.tsx` 신규, 대시보드 헤더 종 아이콘(안 읽음 뱃지 포함)에서 진입

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="results" class="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-52 overflow-y-auto shadow-lg">
+        <div th:each="p : ${results}" class="product-search-item px-4 py-2.5 text-sm hover:bg-gray-50 cursor-pointer"
+             th:attr="data-name=${p.name},data-brand=${p.brand}">
+            <span class="font-semibold" th:text="${p.name}"></span>
+            <span class="text-gray-400 ml-1" th:text="${p.brand}"></span>
+        </div>
+    </div>
+</body>
+</html>

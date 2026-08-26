@@ -13,5 +13,6 @@ public record LedgerHistoryResult(
     LocalDateTime grantedAt,
     LocalDateTime expiredAt,
     LocalDateTime createdAt,
-    String description
+    String description,
+    String brand
 ) {}

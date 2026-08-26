@@ -57,11 +57,14 @@ public class PointLedgerJpaEntity {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "brand", length = 100)
+    private String brand;
+
     @Builder
     public PointLedgerJpaEntity(UUID ledgerId, UUID crewId, UUID workDayId,
                                  UUID txId, LedgerType ledgerType, Long amount,
                                  Long remaining, LocalDateTime grantedAt,
-                                 LocalDateTime expiredAt, String description) {
+                                 LocalDateTime expiredAt, String description, String brand) {
         this.ledgerId    = ledgerId;
         this.crewId      = crewId;
         this.workDayId   = workDayId;
@@ -72,6 +75,7 @@ public class PointLedgerJpaEntity {
         this.grantedAt   = grantedAt;
         this.expiredAt   = expiredAt;
         this.description = description;
+        this.brand       = brand;
     }
 
     public void updateRemaining(long remaining) {

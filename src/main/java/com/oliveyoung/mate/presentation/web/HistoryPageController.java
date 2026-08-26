@@ -172,7 +172,7 @@ public class HistoryPageController {
             case USE -> { icon = "🛍️"; label = "사용"; sign = "-"; }
             default -> { icon = "⏰"; label = "소멸"; sign = "-"; } // EXPIRE
         }
-        return new LedgerRowView(icon, label, sign, amount, l.description(), createdAt, ledgerId, cancelable);
+        return new LedgerRowView(icon, label, sign, amount, l.description(), l.brand(), createdAt, ledgerId, cancelable);
     }
 
     // ── 표시 월 요약 (총 적립/사용/소멸 예정) ───────
@@ -232,7 +232,7 @@ public class HistoryPageController {
     }
 
     public record LedgerRowView(
-        String icon, String label, String sign, long amount, String description,
+        String icon, String label, String sign, long amount, String description, String brand,
         LocalDateTime createdAt, UUID ledgerId, boolean cancelable) {}
 
     public record SummaryView(long earned, long used, long expiring) {}
