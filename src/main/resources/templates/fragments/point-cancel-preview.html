@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="preview">
+        <p th:if="${previewError}" th:text="${previewError}" class="text-red-500 text-sm"></p>
+        <div th:if="${preview != null}" class="flex flex-col">
+            <p class="text-xs font-bold text-gray-400 mb-1">아래 만료분으로 복구돼요</p>
+            <div th:each="l : ${preview.lines()}" class="flex items-center justify-between text-sm py-1.5 border-t border-gray-100 first:border-t-0">
+                <span class="text-gray-500">
+                    <span th:text="${l.expiredAt() != null} ? (${#temporals.format(l.expiredAt(), 'M/d')} + ' 만료분으로 복구') : '만료일 없음으로 복구'"></span>
+                </span>
+                <span class="font-semibold text-brand-strong" th:text="'+' + ${#numbers.formatInteger(l.amount(), 1, 'COMMA')} + 'P'"></span>
+            </div>
+            <div class="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 font-bold">
+                <span>취소 후 잔액</span>
+                <span th:text="${#numbers.formatInteger(preview.resultingBalance(), 1, 'COMMA')} + 'P'"></span>
+            </div>
+            <div class="rounded-xl bg-red-50 border border-red-200 px-3.5 py-2.5 text-xs text-red-500 font-semibold mt-3 leading-relaxed">
+                복구된 포인트의 만료일은 그대로예요.
+                <span th:if="${!preview.lines().isEmpty() and preview.lines()[0].expiredAt() != null}"
+                      th:text="${#temporals.format(preview.lines()[0].expiredAt(), 'M월 d일')} + ' 만료분은 여전히 ' + ${#temporals.format(preview.lines()[0].expiredAt(), 'M월 d일')} + '에 사라져요.'"></span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

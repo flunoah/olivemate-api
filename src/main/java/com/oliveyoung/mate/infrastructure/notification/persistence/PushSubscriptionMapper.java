@@ -14,7 +14,10 @@ public class PushSubscriptionMapper {
             entity.getEndpoint(),
             entity.getP256dh(),
             entity.getAuth(),
-            entity.getRegisteredAt()
+            entity.getRegisteredAt(),
+            entity.isNotifyPointEarned(),
+            entity.isNotifyPointExpiring(),
+            entity.isNotifyAdminAdjusted()
         );
     }
 
@@ -26,6 +29,9 @@ public class PushSubscriptionMapper {
             .p256dh(subscription.getP256dh())
             .auth(subscription.getAuth())
             .registeredAt(subscription.getRegisteredAt())
+            .notifyPointEarned(subscription.isNotifyPointEarned())
+            .notifyPointExpiring(subscription.isNotifyPointExpiring())
+            .notifyAdminAdjusted(subscription.isNotifyAdminAdjusted())
             .build();
     }
 }

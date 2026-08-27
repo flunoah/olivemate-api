@@ -4,40 +4,67 @@
     <th:block th:replace="~{fragments/layout :: head}"></th:block>
     <title>알림 - 마이자소</title>
 </head>
-<body class="bg-gray-50 min-h-screen pb-20">
-    <header class="bg-[#1B9E5B] text-white text-center py-4 font-semibold">알림</header>
+<body class="bg-[#F4F6F1] min-h-screen pb-24">
+    <div class="max-w-sm mx-auto p-5">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-lg font-extrabold tracking-tight">알림</div>
+        </div>
 
-    <main class="max-w-md mx-auto px-4 py-4 space-y-2">
-        <p th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-400 py-12">받은 알림이 없어요</p>
+        <!-- 최초 진입 시 푸시 구독 배너 (S14) -->
+        <div id="pushBanner" class="hidden bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-full bg-brand text-brand-ink flex items-center justify-center flex-none">🔔</div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold">소멸 3일 전에 알려드려요</p>
+                <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">브라우저 알림을 켜면 앱을 열지 않아도 만료 전에 짚어드려요.</p>
+            </div>
+            <button type="button" id="pushBannerBtn" onclick="openNotificationSettingsSheet()" class="text-xs font-bold text-brand-strong flex-none">켜기</button>
+        </div>
 
-        <div th:each="n : ${notifications}"
-             th:hx-patch="@{/notifications/{id}/read(id=${n.id}, deepLink=${n.deepLink})}"
-             hx-swap="none"
-             th:classappend="${n.read} ? 'bg-white border-gray-200' : 'bg-[#F0FFF4] border-green-200'"
-             class="rounded-xl border p-4 flex gap-3 items-start cursor-pointer">
-            <div class="text-2xl" th:text="${n.emoji}"></div>
-            <div class="flex-1">
-                <div class="flex items-center gap-1.5">
-                    <span class="font-medium text-sm" th:text="${n.title}"></span>
-                    <span th:if="${!n.read}" class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+        <p th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-400 py-16 text-sm">받은 알림이 없어요</p>
+
+        <div class="flex flex-col gap-2">
+            <div th:each="n : ${notifications}"
+                 th:hx-patch="@{/notifications/{id}/read(id=${n.id}, deepLink=${n.deepLink})}"
+                 hx-swap="none"
+                 th:classappend="${n.read} ? 'bg-white border-gray-100' : 'bg-[#F1FCE6] border-[#CFEFB4]'"
+                 class="rounded-xl border p-4 flex gap-3 items-start cursor-pointer">
+                <div class="text-2xl flex-none" th:text="${n.emoji}"></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-sm" th:text="${n.title}"></span>
+                        <span th:if="${!n.read}" class="w-1.5 h-1.5 rounded-full bg-accent flex-none"></span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-0.5" th:text="${n.body}"></p>
+                    <p class="text-xs text-gray-400 mt-1" th:text="${n.timeAgo}"></p>
                 </div>
-                <p class="text-sm text-gray-500 mt-0.5" th:text="${n.body}"></p>
-                <p class="text-xs text-gray-400 mt-1" th:text="${n.timeAgo}"></p>
             </div>
         </div>
-    </main>
+    </div>
 
     <script>
         document.body.addEventListener('htmx:beforeRequest', function (e) {
             var el = e.detail.elt;
             if (!el.matches('[hx-patch*="/read"]')) return;
-            el.classList.replace('bg-[#F0FFF4]', 'bg-white');
-            el.classList.replace('border-green-200', 'border-gray-200');
-            var dot = el.querySelector('.bg-red-500');
+            el.classList.remove('bg-[#F1FCE6]', 'border-[#CFEFB4]');
+            el.classList.add('bg-white', 'border-gray-100');
+            var dot = el.querySelector('.bg-accent');
             if (dot) dot.remove();
         });
     </script>
 
     <nav th:replace="~{fragments/layout :: nav}"></nav>
+    <div th:replace="~{fragments/notification-settings-sheet :: sheet}"></div>
+    <script>
+        function openSheet(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
+
+        (function () {
+            var banner = document.getElementById('pushBanner');
+            if (!isPushSupported()) return;
+            getExistingSubscription().then(function (sub) {
+                if (!sub) banner.classList.remove('hidden');
+            });
+        })();
+    </script>
 </body>
 </html>

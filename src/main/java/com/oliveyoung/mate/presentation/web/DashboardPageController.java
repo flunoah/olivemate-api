@@ -6,6 +6,7 @@ import com.oliveyoung.mate.application.point.PointService;
 import com.oliveyoung.mate.application.point.command.CancelUseCommand;
 import com.oliveyoung.mate.application.point.command.UsePointCommand;
 import com.oliveyoung.mate.application.point.result.PointBalanceResult;
+import com.oliveyoung.mate.application.point.result.PointUsePreviewResult;
 import com.oliveyoung.mate.application.point.result.UsePointResult;
 import com.oliveyoung.mate.application.schedule.ScheduleService;
 import com.oliveyoung.mate.application.schedule.result.ScheduleResult;
@@ -56,6 +57,7 @@ public class DashboardPageController {
         } catch (PointAccountNotFoundException e) {
             model.addAttribute("balance", new PointBalanceResult(0, 0, 0, 0, 0, 0));
         }
+        model.addAttribute("pointsPerDay", pointService.getEarnAmount());
 
         ScheduleResult schedule = scheduleService.getMySchedule(crewId).orElse(null);
         Map<LocalDate, WorkDay> workDaysByDate = workDayRepository
@@ -67,10 +69,7 @@ public class DashboardPageController {
             .toList();
         model.addAttribute("weekDays", weekDays);
 
-        List<DayView> extraDays = weekDays.stream()
-            .filter(d -> !d.isPast() && !d.scheduled() && !d.registered() && !d.absent())
-            .toList();
-        model.addAttribute("extraDays", extraDays);
+        model.addAttribute("scheduledDaysLabel", scheduledDaysLabel(schedule));
 
         return "dashboard";
     }
@@ -112,12 +111,27 @@ public class DashboardPageController {
         try {
             UsePointResult result = pointService.use(
                 new UsePointCommand(crewId, amount, productName, usedAt, brand));
-            redirectAttributes.addFlashAttribute("pendingUndo",
-                new UndoView(result.usedLedgerId(), result.usedAmount(), productName));
+            redirectAttributes.addFlashAttribute("usedResult",
+                new UsedResultView(result.usedLedgerId(), result.usedAmount(), productName, LocalDate.now(KST)));
         } catch (InsufficientPointException | PointAccountNotFoundException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/dashboard";
+    }
+
+    @PostMapping("/dashboard/points/preview")
+    public String previewUse(
+            @RequestParam long amount,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate usedAt,
+            Model model) {
+        UUID crewId = SecurityUtils.authenticatedCrewId();
+        try {
+            PointUsePreviewResult preview = pointService.previewUse(crewId, amount, usedAt);
+            model.addAttribute("preview", preview);
+        } catch (InsufficientPointException | PointAccountNotFoundException e) {
+            model.addAttribute("previewError", e.getMessage());
+        }
+        return "fragments/point-use-preview :: preview";
     }
 
     @PostMapping("/dashboard/points/cancel")
@@ -170,6 +184,16 @@ public class DashboardPageController {
             label, color, bg, showRegister, showReinstate, showAbsent, showCancel);
     }
 
+    // ── 소정근무 요일 라벨 (예: "월·화·목") ─────────
+    private static final String[] DOW_LABELS_SUN_FIRST = {"일", "월", "화", "수", "목", "금", "토"};
+
+    private static String scheduledDaysLabel(ScheduleResult schedule) {
+        if (schedule == null || schedule.daysOfWeek().isEmpty()) return "미설정";
+        return schedule.daysOfWeek().stream().sorted()
+            .map(d -> DOW_LABELS_SUN_FIRST[d])
+            .collect(Collectors.joining("·"));
+    }
+
     private static boolean isScheduled(ScheduleResult schedule, LocalDate date) {
         if (schedule == null) return false;
         if (date.isBefore(schedule.startDate())) return false;
@@ -184,5 +208,5 @@ public class DashboardPageController {
         String statusLabel, String statusColor, String statusBg,
         boolean showRegister, boolean showReinstate, boolean showAbsent, boolean showCancel) {}
 
-    public record UndoView(UUID ledgerId, long amount, String product) {}
+    public record UsedResultView(UUID ledgerId, long amount, String product, LocalDate usedDate) {}
 }

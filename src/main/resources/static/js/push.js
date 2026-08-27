@@ -74,6 +74,23 @@ async function subscribeToPush() {
     }
 }
 
+async function updatePushChannels(notifyPointEarned, notifyPointExpiring, notifyAdminAdjusted) {
+    try {
+        const res = await fetch("/push/subscribe/channels", {
+            method: "PATCH",
+            headers: csrfHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({ notifyPointEarned, notifyPointExpiring, notifyAdminAdjusted }),
+        });
+        if (!res.ok) {
+            console.error("[push] 채널 설정 저장 실패", res.status);
+        }
+        return res.ok;
+    } catch (e) {
+        console.error("[push] 채널 설정 저장 실패: 예외 발생", e);
+        return false;
+    }
+}
+
 async function unsubscribeFromPush() {
     if (!isPushSupported()) return false;
     try {

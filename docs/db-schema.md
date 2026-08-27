@@ -97,6 +97,9 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 | p256dh | VARCHAR(500) | |
 | auth | VARCHAR(500) | |
 | registered_at | TIMESTAMP | |
+| notify_point_earned | BOOLEAN | 기본 `TRUE` (`V6`) |
+| notify_point_expiring | BOOLEAN | 기본 `TRUE` (`V6`) |
+| notify_admin_adjusted | BOOLEAN | 기본 `TRUE` (`V6`) |
 
 인덱스: `idx_push_subscriptions_crew_id (crew_id)`
 
@@ -116,6 +119,26 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 
 인덱스: `idx_product_goods_no` UNIQUE, `idx_product_name` (자동완성 `LIKE` 검색용)
 
+## product_request (`V5`)
+
+크루가 상품 검색에서 찾지 못했거나(`NEW`) 매칭된 상품 정보가 틀렸을 때(`CORRECTION`) 보내는 등록·정정 요청. 관리자가 승인하면 `product` 테이블에 반영된다.
+
+| 컬럼 | 타입 | 비고 |
+|---|---|---|
+| id | UUID PK | |
+| crew_id | UUID | |
+| request_type | VARCHAR(20) | `NEW` / `CORRECTION` |
+| product_name | VARCHAR(200) | |
+| brand | VARCHAR(100) | nullable |
+| price | BIGINT | nullable — 모르면 승인 시 0원으로 임시 등록 |
+| note | VARCHAR(500) | nullable |
+| linked_product_id | UUID | nullable — `CORRECTION`일 때 대상 `product.product_id` |
+| status | VARCHAR(20) | `PENDING` / `APPROVED` / `REJECTED` |
+| created_at | TIMESTAMP | |
+| reviewed_at | TIMESTAMP | nullable |
+
+인덱스: `idx_product_request_status (status, created_at)`
+
 ## 마이그레이션 이력
 
 | 파일 | 내용 |
@@ -124,3 +147,5 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 | V2 | `notifications`, `push_subscriptions` 테이블 신설 |
 | V3 | `product` 테이블 신설 |
 | V4 | `point_ledger.brand` 컬럼 추가 |
+| V5 | `product_request` 테이블 신설 |
+| V6 | `push_subscriptions`에 채널별 알림 토글 컬럼 3종 추가 |

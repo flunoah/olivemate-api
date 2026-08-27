@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="preview" class="rounded-xl bg-[#F1FCE6] border border-[#CFEFB4] px-4 py-3 text-sm text-[#24450A]">
+        <p class="font-bold" th:text="'주 ' + ${preview.oldDayCount} + '일 → 주 ' + ${preview.newDayCount} + '일'"></p>
+        <p class="mt-1 font-semibold"
+           th:text="'월 예상 적립이 ' + ${#numbers.formatInteger(preview.oldMonthlyEstimate, 1, 'COMMA')} + 'P → ' + ${#numbers.formatInteger(preview.newMonthlyEstimate, 1, 'COMMA')} + 'P로 ' + (${preview.newMonthlyEstimate >= preview.oldMonthlyEstimate} ? '늘어나요' : '줄어들어요')"></p>
+    </div>
+</body>
+</html>

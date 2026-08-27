@@ -58,6 +58,19 @@ public class Notification {
         );
     }
 
+    public static Notification adminAdjusted(CrewId crewId, LocalDate workDate) {
+        return new Notification(
+            UUID.randomUUID(),
+            crewId,
+            NotificationType.ADMIN_ADJUSTED,
+            "관리자가 근무일을 조정했어요 🛠️",
+            workDate + " 근무 내역이 관리자에 의해 조정됐어요.",
+            "/history?date=" + workDate,
+            false,
+            LocalDateTime.now()
+        );
+    }
+
     // DB 조회 결과 복원용 — 반드시 이걸 써야 id·read·sentAt이 DB 값 그대로 복원됨
     public static Notification reconstruct(UUID id, CrewId crewId, NotificationType type,
                                             String title, String body, String deepLink,

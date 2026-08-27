@@ -23,19 +23,6 @@
             </div>
         </div>
 
-        <!-- 되돌리기 카운트다운 -->
-        <div th:if="${pendingUndo}" id="undo-bar"
-             class="bg-gray-800 text-white rounded-xl px-4 py-3 mb-5 flex items-center justify-between text-sm">
-            <span>
-                <span th:text="${#numbers.formatInteger(pendingUndo.amount, 1, 'COMMA')} + 'P 사용 완료 — ' + ${pendingUndo.product}"></span>
-                <span class="block text-gray-300 text-xs">취소 가능 <span id="undo-countdown">10</span>초</span>
-            </span>
-            <form th:action="@{/dashboard/points/cancel}" method="post">
-                <input type="hidden" name="ledgerId" th:value="${pendingUndo.ledgerId}"/>
-                <button type="submit" class="bg-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded-lg">취소</button>
-            </form>
-        </div>
-
         <!-- 이번 주 근무 -->
         <div class="flex items-center justify-between mb-3">
             <div class="text-base font-extrabold">이번 주 근무</div>
@@ -65,8 +52,8 @@
     </div>
 
     <!-- 포인트 사용 플로팅 버튼 -->
-    <button type="button" onclick="openSheet('pointsSheet')"
-            class="fixed left-1/2 -translate-x-1/2 bottom-[76px] w-[calc(100%-40px)] max-w-[344px] flex items-center justify-center gap-2 h-[52px] rounded-2xl bg-brand text-brand-ink font-bold shadow-lg z-40">
+    <button type="button" onclick="backToSearch(); openSheet('pointsSheet')"
+            class="fixed left-1/2 -translate-x-1/2 bottom-19 w-[calc(100%-40px)] max-w-86 flex items-center justify-center gap-2 h-13 rounded-2xl bg-brand text-brand-ink font-bold shadow-lg z-40">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M12 5v14M5 12h14"/></svg>
         포인트 사용
     </button>
@@ -74,117 +61,357 @@
     <nav th:replace="~{fragments/layout :: nav}"></nav>
 
     <!-- 근무 등록 바텀시트 (S7) -->
-    <div id="workSheet" class="hidden fixed inset-0 z-[60]">
+    <div id="workSheet" class="hidden fixed inset-0 z-60">
         <div class="absolute inset-0 bg-black/40" onclick="closeSheet('workSheet')"></div>
         <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
             <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
-            <div class="text-lg font-extrabold mb-4">이번 주 근무 등록</div>
-
-            <div th:each="d : ${weekDays}" class="flex items-center justify-between py-2.5 border-t border-gray-100 first:border-t-0">
-                <div class="flex items-center gap-3">
-                    <span class="w-6 text-center text-sm font-bold" th:text="${d.dayLabel}"></span>
-                    <span class="text-sm text-gray-500" th:text="${d.date}"></span>
-                    <span th:if="${!d.statusLabel.isEmpty()}" class="text-xs font-bold px-2 py-1 rounded-full"
-                          th:text="${d.statusLabel}"
-                          th:style="'color:' + ${d.statusColor} + ';background:' + ${d.statusBg}"></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <form th:if="${d.showRegister}" th:action="@{/dashboard/workdays/register}" method="post">
-                        <input type="hidden" name="workDate" th:value="${d.date}"/>
-                        <button type="submit" class="text-xs font-bold text-brand-strong">등록</button>
-                    </form>
-                    <form th:if="${d.showAbsent}" th:action="@{/dashboard/workdays/cancel}" method="post">
-                        <input type="hidden" name="workDate" th:value="${d.date}"/>
-                        <button type="submit" class="text-xs font-bold text-gray-400 hover:text-red-500">결근</button>
-                    </form>
-                    <form th:if="${d.showReinstate}" th:action="@{/dashboard/workdays/reinstate}" method="post">
-                        <input type="hidden" name="workDate" th:value="${d.date}"/>
-                        <button type="submit" class="text-xs font-bold text-gray-400 hover:text-brand-strong">결근 취소</button>
-                    </form>
-                    <form th:if="${d.showCancel}" th:action="@{/dashboard/workdays/cancel}" method="post">
-                        <input type="hidden" name="workDate" th:value="${d.date}"/>
-                        <button type="submit" class="text-xs font-bold text-gray-400 hover:text-red-500">삭제</button>
-                    </form>
-                </div>
+            <div class="flex items-baseline justify-between mb-4">
+                <div class="text-lg font-extrabold">이번 주 근무 등록</div>
+                <div class="text-xs text-gray-400 font-semibold"
+                     th:text="${#temporals.format(weekDays[0].date, 'M/d')} + ' - ' + ${#temporals.format(weekDays[6].date, 'M/d')}"></div>
             </div>
 
-            <div th:if="${!extraDays.isEmpty()}" class="mt-4 pt-4 border-t border-gray-100">
-                <p class="text-sm font-bold text-gray-500 mb-3">연장근무</p>
-                <div th:each="d : ${extraDays}"
-                     class="flex items-center justify-between rounded-xl border-2 border-dashed border-brand px-4 py-3 mb-2">
-                    <span class="text-sm font-bold" th:text="${d.dayLabel} + ' ' + ${d.date}"></span>
-                    <form th:action="@{/dashboard/workdays/register}" method="post">
-                        <input type="hidden" name="workDate" th:value="${d.date}"/>
-                        <button type="submit" class="text-xs font-bold text-brand-strong">등록</button>
-                    </form>
+            <p class="text-xs font-bold text-gray-500 mb-2" th:text="'소정근무일 (내 기본 요일: ' + ${scheduledDaysLabel} + ')'"></p>
+            <div class="grid grid-cols-7 gap-1.5 mb-2">
+                <button type="button" th:each="d : ${weekDays}" class="work-chip flex flex-col items-center gap-1 py-2 rounded-xl text-sm font-bold"
+                        th:attr="data-date=${d.date},data-tappable=${d.showAbsent or d.showReinstate or d.showRegister},data-initial=${d.registered and !d.absent},data-show-reinstate=${d.showReinstate},data-show-register=${d.showRegister}"
+                        th:disabled="${!(d.showAbsent or d.showReinstate or d.showRegister)}">
+                    <span class="text-[11px] font-semibold text-gray-400" th:text="${d.dayLabel}"></span>
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center chip-mark" th:text="${#temporals.day(d.date)}"></span>
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">탭해서 해제하면 결근으로 기록되고 적립되지 않아요</p>
+
+            <p class="text-xs font-bold text-gray-500 mb-2">연장근무</p>
+            <div id="extraDaysList" class="space-y-2 mb-2">
+                <div th:each="d : ${weekDays}" th:if="${d.registered and !d.scheduled}"
+                     class="extra-chip flex items-center justify-between rounded-xl border-2 border-dashed border-brand px-4 py-3"
+                     th:attr="data-date=${d.date}">
+                    <span class="text-sm font-bold" th:text="${d.dayLabel} + ' ' + ${#temporals.format(d.date, 'M월 d일')} + ' · 연장근무'"></span>
+                    <button type="button" class="extra-remove-btn text-gray-400 hover:text-red-500 text-lg leading-none">&times;</button>
                 </div>
             </div>
-
-            <div class="rounded-xl bg-[#F1FCE6] border border-[#CFEFB4] px-4 py-3 text-xs text-[#24450A] font-semibold mt-4">
-                등록한 근무는 <b>다음날 오전 1시</b>에 적립되고, 적립일부터 <b>31일 후</b> 소멸돼요.
-            </div>
-
-            <button type="button" onclick="closeSheet('workSheet')"
-                    class="w-full h-[52px] mt-4 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">
-                닫기
+            <button type="button" onclick="addExtraDay()"
+                    class="w-full flex items-center justify-center gap-1.5 h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 mb-1">
+                <span class="text-lg leading-none">+</span> 연장근무 날짜 추가
             </button>
+            <input type="date" id="extraDayPicker" class="hidden w-full h-11 border border-gray-200 rounded-xl px-4 text-sm mt-1"/>
+
+            <div id="workPreviewBox" class="rounded-xl bg-[#F1FCE6] border border-[#CFEFB4] px-4 py-3 text-xs text-[#24450A] font-semibold mt-4"></div>
+
+            <div class="flex gap-2 mt-4">
+                <button type="button" onclick="closeSheet('workSheet')"
+                        class="h-13 px-5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">닫기</button>
+                <button type="button" onclick="saveWorkSheet()"
+                        class="flex-1 h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">저장하기</button>
+            </div>
         </div>
     </div>
 
-    <!-- 포인트 사용 바텀시트 -->
-    <div id="pointsSheet" class="hidden fixed inset-0 z-[60]">
+    <!-- 포인트 사용 바텀시트: 1단계 상품 찾기(S8) → 2단계 FIFO 미리보기(S9) → 3단계 완료(S10) -->
+    <div id="pointsSheet" class="hidden fixed inset-0 z-60">
         <div class="absolute inset-0 bg-black/40" onclick="closeSheet('pointsSheet')"></div>
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
+            <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
+            <form th:action="@{/dashboard/points/use}" method="post">
+                <div id="pointsStep1">
+                    <div class="flex items-center justify-between mb-3">
+                        <button type="button" onclick="closeSheet('pointsSheet')" class="text-gray-400 text-xl leading-none">&times;</button>
+                        <span class="text-sm font-bold">포인트 사용</span>
+                        <span class="text-xs text-gray-300 font-semibold">1/3</span>
+                    </div>
+                    <div class="h-1 bg-gray-100 rounded-full mb-4"><div class="h-1 w-1/3 bg-brand rounded-full"></div></div>
+
+                    <div class="text-lg font-extrabold mb-3">어떤 상품을 구매했나요?</div>
+                    <div class="relative mb-3">
+                        <input type="text" name="productName" id="productName" required placeholder="상품명을 입력해 주세요." autocomplete="off"
+                               hx-get="/products/search" hx-trigger="keyup changed delay:300ms" hx-target="#productSearchResults"
+                               class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+                        <div id="productSearchResults"></div>
+                    </div>
+                    <input type="hidden" name="brand" id="productBrand"/>
+                    <button type="button" id="pointsNextBtn" onclick="goToPreview()" disabled
+                            class="w-full h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition disabled:opacity-40">다음</button>
+                </div>
+
+                <div id="pointsStep2" class="hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <button type="button" onclick="backToSearch()" class="text-gray-400">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <span class="text-sm font-bold">포인트 사용</span>
+                        <span class="text-xs text-gray-300 font-semibold">2/3</span>
+                    </div>
+                    <div class="h-1 bg-gray-100 rounded-full mb-4"><div class="h-1 w-2/3 bg-brand rounded-full"></div></div>
+
+                    <div class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 mb-2">
+                        <div class="min-w-0">
+                            <p id="selectedProductName" class="text-sm font-bold truncate"></p>
+                            <p id="selectedProductMeta" class="text-xs text-gray-400"></p>
+                        </div>
+                        <button type="button" onclick="backToSearch()" class="text-xs font-bold text-gray-400 flex-none ml-2">변경</button>
+                    </div>
+                    <button type="button" id="correctionRequestBtn" onclick="openCorrectionRequest()"
+                            class="flex items-center gap-1 text-xs text-gray-400 font-semibold mb-4">
+                        <span>ⓘ</span> 상품명·판매가 다른가요? <span class="text-brand-strong underline">정정 요청</span>
+                    </button>
+
+                    <p class="text-xs font-bold text-gray-500 mb-1">사용할 포인트</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <input type="number" name="amount" id="pointsAmount" min="1" required placeholder="0"
+                               hx-post="/dashboard/points/preview" hx-trigger="keyup changed delay:400ms, change"
+                               hx-target="#usePreviewArea"
+                               class="text-3xl font-extrabold w-2/3 focus:outline-none border-b-2 border-gray-100 focus:border-brand pb-1"/>
+                        <button type="button" onclick="useFullAmount()"
+                                class="text-xs font-bold text-brand-strong bg-[#F1FCE6] rounded-full px-3 py-1.5"
+                                th:text="'전액 ' + ${#numbers.formatInteger(balance.balance, 1, 'COMMA')} + 'P'"></button>
+                    </div>
+
+                    <div id="usePreviewArea" class="mb-3"></div>
+
+                    <button type="submit" id="useSubmitBtn"
+                            class="w-full h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">사용하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 상품 등록·정정 요청 바텀시트 (S11) -->
+    <div id="productRequestSheet" class="hidden fixed inset-0 z-70">
+        <div class="absolute inset-0 bg-black/40" onclick="closeSheet('productRequestSheet')"></div>
         <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5">
             <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
-            <div class="text-lg font-extrabold mb-4">포인트 사용</div>
-            <form th:action="@{/dashboard/points/use}" method="post" class="space-y-3">
-                <input type="date" name="usedAt" class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                <input type="number" name="amount" min="1" required placeholder="사용 포인트"
-                       class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                <div class="relative">
-                    <input type="text" name="productName" id="productName" required placeholder="제품명 입력" autocomplete="off"
-                           hx-get="/products/search" hx-trigger="keyup changed delay:300ms" hx-target="#productSearchResults"
-                           class="w-full h-[52px] border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                    <div id="productSearchResults"></div>
+            <div class="text-lg font-extrabold mb-1">관리자에게 요청 보내기</div>
+            <p class="text-sm text-gray-400 mb-4">보낸 내용은 상품 DB에 바로 반영되지 않고, 관리자 확인 후 등록돼요.</p>
+
+            <div class="flex gap-1.5 bg-gray-100 rounded-xl p-1 mb-4">
+                <button type="button" id="tabNew" onclick="setProductRequestType('NEW')"
+                        class="flex-1 h-9 rounded-lg text-sm font-bold transition">신규 등록</button>
+                <button type="button" id="tabCorrection" onclick="setProductRequestType('CORRECTION')"
+                        class="flex-1 h-9 rounded-lg text-sm font-bold transition">정보 정정</button>
+            </div>
+
+            <form th:action="@{/products/requests}" method="post" class="space-y-3">
+                <input type="hidden" name="requestType" id="productRequestType" value="NEW"/>
+                <input type="hidden" name="linkedProductId" id="productRequestLinkedId"/>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 mb-1 block">상품명 <span class="text-red-400">*</span></label>
+                    <input type="text" name="productName" id="productRequestName" required placeholder="상품명"
+                           class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
                 </div>
-                <input type="hidden" name="brand" id="productBrand"/>
-                <button type="submit" class="w-full h-[52px] bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">사용하기</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">브랜드</label>
+                        <input type="text" name="brand" id="productRequestBrand" placeholder="브랜드"
+                               class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">판매가</label>
+                        <input type="number" name="price" placeholder="원"
+                               class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+                    </div>
+                </div>
+                <div class="rounded-xl bg-[#F1FCE6] border border-[#CFEFB4] px-4 py-3 text-xs text-[#24450A] font-semibold leading-relaxed">
+                    요청 대기 중에도 사용 등록은 임시 항목으로 진행돼요. 관리자가 승인하면 실제 상품에 자동으로 연결됩니다.
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeSheet('productRequestSheet')"
+                            class="h-13 px-5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">닫기</button>
+                    <button type="submit" class="flex-1 h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">요청 보내기</button>
+                </div>
             </form>
-            <button type="button" onclick="closeSheet('pointsSheet')"
-                    class="w-full h-[52px] mt-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">
-                닫기
-            </button>
         </div>
     </div>
 
-    <script>
+    <!-- 사용 완료 (S10) -->
+    <div th:if="${usedResult}" class="fixed inset-0 z-80 bg-white flex flex-col items-center justify-center px-8 text-center">
+        <div class="w-20 h-20 rounded-full bg-brand flex items-center justify-center mb-5">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <p class="text-xl font-extrabold mb-1" th:text="${#numbers.formatInteger(usedResult.amount, 1, 'COMMA')} + 'P 사용 완료'"></p>
+        <p class="text-sm text-gray-500 mb-1" th:text="${usedResult.product} + ' · ' + ${#temporals.format(usedResult.usedDate, 'M월 d일')}"></p>
+        <p class="text-sm text-gray-400 mb-5">남은 포인트 <span th:text="${#numbers.formatInteger(balance.balance, 1, 'COMMA')} + 'P'"></span></p>
+        <div class="rounded-xl bg-[#F1FCE6] border border-[#CFEFB4] px-4 py-3 text-xs text-[#24450A] font-semibold mb-6 max-w-xs leading-relaxed">
+            잘못 등록했다면 오늘 안에 내역에서 취소할 수 있어요. 자정이 지나면 관리자 문의가 필요해요.
+        </div>
+        <a th:href="@{/history}" class="w-full max-w-xs h-13 flex items-center justify-center bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl mb-2 transition">내역에서 확인하기</a>
+        <a th:href="@{/dashboard}" class="w-full max-w-xs h-13 flex items-center justify-center text-gray-500 font-bold">홈으로</a>
+    </div>
+
+    <style>
+        .work-chip[data-tappable="false"] { opacity: .4; }
+        .work-chip[data-current="true"] .chip-mark { background: var(--color-brand); color: var(--color-brand-ink); }
+        .work-chip[data-current="false"] .chip-mark { background: #F3F4F6; color: #9CA3AF; }
+    </style>
+
+    <script th:inline="javascript">
+        var POINTS_PER_DAY = /*[[${pointsPerDay}]]*/ 1000;
+
         function openSheet(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
 
+        // ── S7 근무 등록 시트 ───────────────────────
+        var workChips = Array.from(document.querySelectorAll('.work-chip'));
+        var workState = {}; // date -> 'REGISTERED' | 'ABSENT'
+        workChips.forEach(function (chip) {
+            var date = chip.dataset.date;
+            workState[date] = chip.dataset.initial === 'true' ? 'REGISTERED' : 'ABSENT';
+            chip.dataset.current = workState[date] === 'REGISTERED';
+            if (chip.dataset.tappable === 'true') {
+                chip.addEventListener('click', function () {
+                    workState[date] = workState[date] === 'REGISTERED' ? 'ABSENT' : 'REGISTERED';
+                    chip.dataset.current = workState[date] === 'REGISTERED';
+                    updateWorkPreview();
+                });
+            }
+        });
+
+        var extraState = {}; // date -> true(유지) — 제거되면 키 삭제
+        document.querySelectorAll('.extra-chip').forEach(function (chip) {
+            extraState[chip.dataset.date] = true;
+            chip.querySelector('.extra-remove-btn').addEventListener('click', function () {
+                delete extraState[chip.dataset.date];
+                chip.remove();
+                updateWorkPreview();
+            });
+        });
+
+        function addExtraDay() {
+            var picker = document.getElementById('extraDayPicker');
+            if (picker.classList.contains('hidden')) {
+                picker.classList.remove('hidden');
+                picker.min = new Date().toISOString().slice(0, 10);
+                picker.focus();
+                picker.onchange = function () {
+                    var date = picker.value;
+                    if (!date || extraState[date] || workState[date] !== undefined) { picker.value = ''; return; }
+                    extraState[date] = true;
+                    var row = document.createElement('div');
+                    row.className = 'extra-chip flex items-center justify-between rounded-xl border-2 border-dashed border-brand px-4 py-3';
+                    row.dataset.date = date;
+                    var dObj = new Date(date + 'T00:00:00');
+                    var label = (dObj.getMonth() + 1) + '월 ' + dObj.getDate() + '일 · 연장근무';
+                    row.innerHTML = '<span class="text-sm font-bold">' + label + '</span>' +
+                        '<button type="button" class="extra-remove-btn text-gray-400 hover:text-red-500 text-lg leading-none">&times;</button>';
+                    row.querySelector('.extra-remove-btn').addEventListener('click', function () {
+                        delete extraState[date];
+                        row.remove();
+                        updateWorkPreview();
+                    });
+                    document.getElementById('extraDaysList').appendChild(row);
+                    picker.value = '';
+                    picker.classList.add('hidden');
+                    updateWorkPreview();
+                };
+            }
+        }
+
+        function updateWorkPreview() {
+            var registeredCount = Object.keys(workState).filter(function (d) { return workState[d] === 'REGISTERED'; }).length
+                + Object.keys(extraState).length;
+            var points = registeredCount * POINTS_PER_DAY;
+            document.getElementById('workPreviewBox').innerHTML =
+                '등록한 근무 ' + registeredCount + '일 → 내일 오전 1시에 ' + points.toLocaleString('ko-KR') + 'P 적립 예정 · 적립일부터 31일 후 소멸';
+        }
+        updateWorkPreview();
+
+        var INITIAL_EXTRA_DATES = Array.from(document.querySelectorAll('#extraDaysList .extra-chip')).map(function (c) { return c.dataset.date; });
+
+        function saveWorkSheet() {
+            var requests = [];
+            workChips.forEach(function (chip) {
+                var date = chip.dataset.date;
+                var wasRegistered = chip.dataset.initial === 'true';
+                var isRegistered = workState[date] === 'REGISTERED';
+                if (wasRegistered === isRegistered) return;
+                var url = isRegistered
+                    ? (chip.dataset.showReinstate === 'true' ? '/dashboard/workdays/reinstate' : '/dashboard/workdays/register')
+                    : '/dashboard/workdays/cancel';
+                requests.push(postWorkDay(url, date));
+            });
+            // 새로 추가된(원래 없던) 연장근무 등록
+            Object.keys(extraState).forEach(function (date) {
+                if (INITIAL_EXTRA_DATES.indexOf(date) === -1) requests.push(postWorkDay('/dashboard/workdays/register', date));
+            });
+            // X로 제거된 기존 연장근무는 결근 처리
+            INITIAL_EXTRA_DATES.forEach(function (date) {
+                if (!extraState[date]) requests.push(postWorkDay('/dashboard/workdays/cancel', date));
+            });
+            Promise.all(requests).finally(function () { location.reload(); });
+        }
+
+        function postWorkDay(url, date) {
+            var body = new URLSearchParams({ workDate: date });
+            return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body });
+        }
+
+        // ── S8~S10 포인트 사용 시트 ─────────────────
+        var selectedProduct = null;
+
         document.getElementById('productSearchResults').addEventListener('click', function (e) {
+            var correctionBtn = e.target.closest('.product-correction-btn');
+            if (correctionBtn) {
+                openProductRequest('CORRECTION', correctionBtn.dataset.id, correctionBtn.dataset.name, correctionBtn.dataset.brand);
+                return;
+            }
+            var newRequestBtn = e.target.closest('#productNewRequestBtn');
+            if (newRequestBtn) {
+                openProductRequest('NEW', null, newRequestBtn.dataset.name, null);
+                return;
+            }
             var item = e.target.closest('.product-search-item');
             if (!item) return;
+            selectedProduct = { id: null, name: item.dataset.name, brand: item.dataset.brand, price: item.dataset.price };
             document.getElementById('productName').value = item.dataset.name;
             document.getElementById('productBrand').value = item.dataset.brand;
             document.getElementById('productSearchResults').innerHTML = '';
+            document.getElementById('pointsNextBtn').disabled = false;
         });
-    </script>
 
-    <script th:if="${pendingUndo}">
-        (function () {
-            var seconds = 10;
-            var countdownEl = document.getElementById('undo-countdown');
-            var barEl = document.getElementById('undo-bar');
-            var timer = setInterval(function () {
-                seconds -= 1;
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    if (barEl) barEl.style.display = 'none';
-                    return;
-                }
-                if (countdownEl) countdownEl.textContent = seconds;
-            }, 1000);
-        })();
+        function openProductRequest(requestType, linkedProductId, name, brand) {
+            document.getElementById('productRequestLinkedId').value = linkedProductId || '';
+            document.getElementById('productRequestName').value = name || '';
+            document.getElementById('productRequestBrand').value = brand || '';
+            setProductRequestType(requestType);
+            openSheet('productRequestSheet');
+        }
+
+        function openCorrectionRequest() {
+            openProductRequest('CORRECTION', selectedProduct ? selectedProduct.id : null,
+                document.getElementById('productName').value, document.getElementById('productBrand').value);
+        }
+
+        function setProductRequestType(type) {
+            document.getElementById('productRequestType').value = type;
+            var newTab = document.getElementById('tabNew'), corrTab = document.getElementById('tabCorrection');
+            newTab.className = 'flex-1 h-9 rounded-lg text-sm font-bold transition ' + (type === 'NEW' ? 'bg-gray-900 text-white' : 'text-gray-400');
+            corrTab.className = 'flex-1 h-9 rounded-lg text-sm font-bold transition ' + (type === 'CORRECTION' ? 'bg-gray-900 text-white' : 'text-gray-400');
+        }
+
+        function goToPreview() {
+            if (!selectedProduct) return;
+            document.getElementById('selectedProductName').textContent = selectedProduct.name;
+            document.getElementById('selectedProductMeta').textContent = selectedProduct.brand +
+                (selectedProduct.price ? ' · ' + Number(selectedProduct.price).toLocaleString('ko-KR') + '원' : '');
+            document.getElementById('pointsStep1').classList.add('hidden');
+            document.getElementById('pointsStep2').classList.remove('hidden');
+        }
+
+        function backToSearch() {
+            document.getElementById('pointsStep2').classList.add('hidden');
+            document.getElementById('pointsStep1').classList.remove('hidden');
+        }
+
+        function useFullAmount() {
+            var input = document.getElementById('pointsAmount');
+            input.value = /*[[${balance.balance}]]*/ 0;
+            htmx.trigger(input, 'change');
+        }
+
+        document.getElementById('pointsAmount').addEventListener('input', function () {
+            var amount = Number(this.value) || 0;
+            document.getElementById('useSubmitBtn').textContent = amount > 0 ? amount.toLocaleString('ko-KR') + 'P 사용하기' : '사용하기';
+        });
     </script>
 </body>
 </html>

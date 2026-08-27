@@ -5,6 +5,7 @@ import com.oliveyoung.mate.application.attendance.command.RegisterWorkDayCommand
 import com.oliveyoung.mate.application.schedule.command.SaveScheduleCommand;
 import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
+import com.oliveyoung.mate.domain.point.repository.PointPolicyRepository;
 import com.oliveyoung.mate.domain.schedule.model.CrewSchedule;
 import com.oliveyoung.mate.domain.schedule.repository.CrewScheduleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ class ScheduleServiceTest {
     private CrewScheduleRepository scheduleRepository;
     private AttendanceService      attendanceService;
     private WorkDayRepository      workDayRepository;
+    private PointPolicyRepository  policyRepository;
     private ScheduleService        scheduleService;
 
     private static final LocalDate TODAY = LocalDate.now();
@@ -44,10 +46,11 @@ class ScheduleServiceTest {
         scheduleRepository = mock(CrewScheduleRepository.class);
         attendanceService  = mock(AttendanceService.class);
         workDayRepository  = mock(WorkDayRepository.class);
+        policyRepository   = mock(PointPolicyRepository.class);
 
         when(workDayRepository.findByCrewIdAndWorkDate(any(), any())).thenReturn(Optional.empty());
 
-        scheduleService = new ScheduleService(scheduleRepository, attendanceService, workDayRepository);
+        scheduleService = new ScheduleService(scheduleRepository, attendanceService, workDayRepository, policyRepository);
     }
 
     @Test

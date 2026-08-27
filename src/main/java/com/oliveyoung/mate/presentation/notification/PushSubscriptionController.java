@@ -33,6 +33,16 @@ public class PushSubscriptionController {
         pushSubscriptionService.unsubscribe(endpoint);
         return ApiResponse.ok(null);
     }
+
+    @PatchMapping("/subscribe/channels")
+    public ApiResponse<Void> updateChannels(@RequestBody PushChannelsRequest request) {
+        CrewId crewId = CrewId.of(SecurityUtils.authenticatedCrewId());
+        pushSubscriptionService.updateChannels(crewId,
+            request.notifyPointEarned(), request.notifyPointExpiring(), request.notifyAdminAdjusted());
+        return ApiResponse.ok(null);
+    }
 }
 
 record PushSubscribeRequest(String endpoint, String p256dh, String auth) {}
+
+record PushChannelsRequest(boolean notifyPointEarned, boolean notifyPointExpiring, boolean notifyAdminAdjusted) {}

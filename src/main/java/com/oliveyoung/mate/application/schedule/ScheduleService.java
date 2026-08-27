@@ -4,8 +4,11 @@ import com.oliveyoung.mate.application.JobReport;
 import com.oliveyoung.mate.application.attendance.AttendanceService;
 import com.oliveyoung.mate.application.attendance.command.RegisterWorkDayCommand;
 import com.oliveyoung.mate.application.schedule.command.SaveScheduleCommand;
+import com.oliveyoung.mate.application.schedule.result.SchedulePreviewResult;
 import com.oliveyoung.mate.application.schedule.result.ScheduleResult;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
+import com.oliveyoung.mate.domain.point.repository.PointPolicyRepository;
+import com.oliveyoung.mate.domain.point.vo.PointPolicy;
 import com.oliveyoung.mate.domain.schedule.model.CrewSchedule;
 import com.oliveyoung.mate.domain.schedule.repository.CrewScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class ScheduleService {
     private final CrewScheduleRepository scheduleRepository;
     private final AttendanceService      attendanceService;
     private final WorkDayRepository      workDayRepository;
+    private final PointPolicyRepository  policyRepository;
 
     // ── 근무요일 저장 ──────────────────────────────
     @Transactional
@@ -71,6 +75,20 @@ public class ScheduleService {
     public Optional<ScheduleResult> getMySchedule(UUID crewId) {
         return scheduleRepository.findActiveByCrewId(crewId)
             .map(s -> new ScheduleResult(s.getDaysOfWeek(), s.getStartDate(), s.getEndDate()));
+    }
+
+    // ── 요일 변경 영향 미리보기 (저장 안 함) ────────
+    @Transactional(readOnly = true)
+    public SchedulePreviewResult previewChange(UUID crewId, java.util.List<Integer> newDaysOfWeek) {
+        int oldCount = getMySchedule(crewId).map(s -> s.daysOfWeek().size()).orElse(0);
+        int newCount = newDaysOfWeek.size();
+
+        PointPolicy policy = policyRepository.findActivePolicy().orElse(PointPolicy.defaultPolicy());
+        double weeksPerMonth = 4.33;
+        long oldMonthly = Math.round(oldCount * policy.earnAmount() * weeksPerMonth);
+        long newMonthly = Math.round(newCount * policy.earnAmount() * weeksPerMonth);
+
+        return new SchedulePreviewResult(oldCount, newCount, oldMonthly, newMonthly);
     }
 
     // ── Cron/Admin 일일 근무일 생성 ─────────────────
