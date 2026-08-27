@@ -1,104 +1,122 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head}"></head>
-<body class="bg-gray-50 min-h-screen pb-20">
-    <div class="max-w-sm mx-auto p-6">
-        <div class="flex items-center justify-between mb-6">
-            <div class="text-lg font-bold text-gray-800">내역</div>
-            <form th:action="@{/logout}" method="post">
-                <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>
-            </form>
+<body class="bg-[#F4F6F1] min-h-screen pb-24">
+    <div class="max-w-sm mx-auto p-5">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-lg font-extrabold tracking-tight">내역</div>
+            <a th:href="@{/notifications}" class="relative text-gray-700">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1112 0v5l2 3H4l2-3z"/></svg>
+                <span th:if="${hasUnreadNotifications}" class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-accent"></span>
+            </a>
         </div>
 
-        <p th:if="${message}" th:text="${message}" class="text-green-700 bg-green-50 text-sm rounded-lg px-4 py-2 mb-4"></p>
-        <p th:if="${error}" th:text="${error}" class="text-red-600 bg-red-50 text-sm rounded-lg px-4 py-2 mb-4"></p>
+        <p th:if="${message}" th:text="${message}" class="text-brand-strong bg-[#F1FCE6] text-sm font-semibold rounded-xl px-4 py-2.5 mb-3"></p>
+        <p th:if="${error}" th:text="${error}" class="text-red-600 bg-red-50 text-sm font-semibold rounded-xl px-4 py-2.5 mb-3"></p>
 
         <!-- 만료 임박 배너 -->
-        <div th:if="${expiryBanner}" class="bg-orange-50 rounded-xl px-4 py-3 mb-4 text-sm text-orange-700">
+        <div th:if="${expiryBanner}" class="rounded-xl px-4 py-3 mb-4 text-sm font-semibold bg-orange-50 text-orange-600">
             <span th:text="${#numbers.formatInteger(expiryBanner.amount, 1, 'COMMA')} + 'P가 '"></span>
             <span th:text="${expiryBanner.dDay == 0 ? '오늘' : expiryBanner.dDay + '일 후'} + ' (' + ${expiryBanner.expiredAt} + ') 만료돼요'"></span>
         </div>
 
-        <!-- 표시 월 요약 -->
-        <div class="bg-green-50 rounded-2xl p-5 mb-4 grid grid-cols-3 gap-2 text-center text-xs text-gray-500">
-            <div><span class="block text-base font-bold text-gray-700" th:text="${#numbers.formatInteger(summary.earned, 1, 'COMMA')}"></span>총 적립</div>
-            <div><span class="block text-base font-bold text-gray-700" th:text="${#numbers.formatInteger(summary.used, 1, 'COMMA')}"></span>총 사용</div>
-            <div><span class="block text-base font-bold text-gray-700" th:text="${#numbers.formatInteger(summary.expiring, 1, 'COMMA')}"></span>소멸 예정</div>
+        <!-- 필터 탭 -->
+        <div class="flex gap-1.5 bg-white rounded-xl p-1 shadow-sm mb-4">
+            <a th:href="@{/history(type='ALL')}" th:class="'flex-1 text-center text-sm font-bold rounded-lg py-2 ' + (${type == 'ALL'} ? 'bg-gray-900 text-white' : 'text-gray-400')">전체</a>
+            <a th:href="@{/history(type='EARN')}" th:class="'flex-1 text-center text-sm font-bold rounded-lg py-2 ' + (${type == 'EARN'} ? 'bg-gray-900 text-white' : 'text-gray-400')">적립</a>
+            <a th:href="@{/history(type='USE')}" th:class="'flex-1 text-center text-sm font-bold rounded-lg py-2 ' + (${type == 'USE'} ? 'bg-gray-900 text-white' : 'text-gray-400')">사용</a>
+            <a th:href="@{/history(type='EXPIRE')}" th:class="'flex-1 text-center text-sm font-bold rounded-lg py-2 ' + (${type == 'EXPIRE'} ? 'bg-gray-900 text-white' : 'text-gray-400')">소멸</a>
         </div>
 
-        <!-- 달력 -->
-        <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <a th:href="@{/history(year=${prevYear}, month=${prevMonth})}" class="px-2 text-gray-400 hover:text-gray-600">‹</a>
-                <span class="text-sm font-medium text-gray-700" th:text="${year} + '년 ' + ${month} + '월'"></span>
-                <a th:href="@{/history(year=${nextYear}, month=${nextMonth})}" class="px-2 text-gray-400 hover:text-gray-600">›</a>
+        <!-- 이번 달 요약 -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-4 grid grid-cols-3 gap-2 text-center">
+            <div>
+                <span class="block text-lg font-extrabold text-brand-strong" th:text="${#numbers.formatInteger(summary.earned, 1, 'COMMA')}"></span>
+                <span class="text-xs text-gray-400 font-semibold">이번 달 적립</span>
             </div>
-
-            <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 mb-1">
-                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+            <div>
+                <span class="block text-lg font-extrabold text-gray-800" th:text="${#numbers.formatInteger(summary.used, 1, 'COMMA')}"></span>
+                <span class="text-xs text-gray-400 font-semibold">사용</span>
             </div>
-
-            <div class="grid grid-cols-7 gap-1">
-                <div th:each="d : ${days}" th:if="${d.blank}" class="aspect-square"></div>
-                <a th:each="d : ${days}" th:if="${!d.blank}"
-                   th:href="@{/history(year=${year}, month=${month}, date=${d.date})}"
-                   th:class="'aspect-square rounded-lg flex flex-col items-center justify-center text-xs gap-0.5 ' + ${d.cellClass}">
-                    <span th:text="${d.dayOfMonth}"></span>
-                    <span class="flex gap-0.5">
-                        <span th:if="${d.hasInit}" class="w-1 h-1 rounded-full bg-blue-500"></span>
-                        <span th:if="${d.hasEarn}" class="w-1 h-1 rounded-full bg-green-500"></span>
-                        <span th:if="${d.hasUse}" class="w-1 h-1 rounded-full bg-red-500"></span>
-                        <span th:if="${d.hasExpire}" class="w-1 h-1 rounded-full bg-gray-400"></span>
-                        <span th:if="${d.hasExpiring}" class="w-1 h-1 rounded-full bg-orange-400"></span>
-                    </span>
-                </a>
-            </div>
-
-            <div class="flex gap-3 justify-center mt-3 text-[11px] text-gray-400">
-                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>초기 지급</span>
-                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>적립</span>
-                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>사용</span>
-                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>소멸 예정</span>
+            <div>
+                <span class="block text-lg font-extrabold text-accent" th:text="${#numbers.formatInteger(summary.expiring, 1, 'COMMA')}"></span>
+                <span class="text-xs text-gray-400 font-semibold">소멸 예정</span>
             </div>
         </div>
 
-        <!-- 선택한 날짜 상세 -->
-        <div th:if="${selectedDate}" class="bg-white rounded-2xl shadow-sm p-5 mb-4">
-            <p class="text-sm font-medium text-gray-700 mb-3" th:text="${selectedDate} + ' 내역'"></p>
-            <p th:if="${selectedLedgers.isEmpty()}" class="text-gray-400 text-sm text-center py-4">내역이 없어요.</p>
-            <div th:each="l : ${selectedLedgers}" class="flex items-center justify-between py-2.5 border-t border-gray-100 first:border-t-0">
-                <div>
-                    <span class="text-sm" th:text="${l.icon} + ' ' + ${l.label}"></span>
-                    <span th:if="${l.description}" class="text-xs text-gray-400 ml-1" th:text="${l.description}"></span>
-                    <span th:if="${l.brand}" class="text-xs text-gray-300 ml-1" th:text="'· ' + ${l.brand}"></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium" th:text="${l.sign} + ${#numbers.formatInteger(l.amount, 1, 'COMMA')} + 'P'"
-                          th:classappend="${l.sign == '+'} ? 'text-green-600' : 'text-red-500'"></span>
-                    <form th:if="${l.cancelable}" th:action="@{/history/points/cancel}" method="post"
-                          onsubmit="return confirm('사용을 취소할까요?');">
+        <!-- 시간순 리스트 -->
+        <p th:if="${groups.isEmpty()}" class="text-gray-400 text-sm text-center py-10">내역이 없어요.</p>
+        <div th:each="g : ${groups}" class="mb-4">
+            <p class="text-sm font-bold text-gray-500 mb-2 px-1" th:text="${g.dateLabel}"></p>
+            <div class="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
+                <div th:each="l : ${g.rows}" class="p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="min-w-0">
+                            <span class="text-sm font-semibold" th:text="${l.icon} + ' ' + ${l.label}"></span>
+                        </div>
+                        <span class="text-sm font-bold flex-none" th:text="${l.sign} + ${#numbers.formatInteger(l.amount, 1, 'COMMA')} + 'P'"
+                              th:classappend="${l.sign == '+'} ? 'text-brand-strong' : 'text-red-500'"></span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                        <span th:text="${l.label}"></span>
+                        <span th:if="${l.description}" th:text="' · ' + ${l.description}"></span>
+                        <span th:if="${l.brand}" th:text="' · ' + ${l.brand}"></span>
+                        <span th:if="${l.label == '사용' and !l.cancelable}"> · 취소 가능 기간이 지났어요</span>
+                    </p>
+                    <form th:if="${l.cancelable}" th:action="@{/history/points/cancel}" method="post" class="cancel-form mt-2.5"
+                          th:attr="data-ledger-id=${l.ledgerId},data-description=${l.description},data-brand=${l.brand},data-amount=${l.amount}">
                         <input type="hidden" name="ledgerId" th:value="${l.ledgerId}"/>
-                        <input type="hidden" name="year" th:value="${year}"/>
-                        <input type="hidden" name="month" th:value="${month}"/>
-                        <input type="hidden" name="date" th:value="${selectedDate}"/>
-                        <button type="submit" class="text-xs text-gray-400 hover:text-red-500">취소</button>
+                        <input type="hidden" name="type" th:value="${type}"/>
+                        <button type="button" class="cancel-open-btn w-full h-10 border-2 border-brand text-brand-strong text-sm font-bold rounded-xl">사용 취소</button>
                     </form>
                 </div>
             </div>
         </div>
-
-        <!-- 지난달 적립 내역 -->
-        <details th:if="${!prevMonthLedgers.isEmpty()}" class="bg-white rounded-2xl shadow-sm p-5">
-            <summary class="text-sm font-medium text-gray-700 cursor-pointer" th:text="${prevMonth} + '월 적립 내역'"></summary>
-            <div th:each="l : ${prevMonthLedgers}" class="flex items-center justify-between py-2.5 border-t border-gray-100">
-                <div>
-                    <span class="text-sm text-gray-700" th:text="${l.grantedDate} + ' 적립'"></span>
-                    <p class="text-xs text-gray-400" th:text="'만료 ' + ${l.dDayLabel}"></p>
-                </div>
-                <span class="text-sm font-medium text-green-600" th:text="'+' + ${#numbers.formatInteger(l.amount, 1, 'COMMA')} + 'P'"></span>
-            </div>
-        </details>
     </div>
     <nav th:replace="~{fragments/layout :: nav}"></nav>
+
+    <!-- 사용 취소 확인 바텀시트 (S13) -->
+    <div id="cancelSheet" class="hidden fixed inset-0 z-60">
+        <div class="absolute inset-0 bg-black/40" onclick="closeSheet('cancelSheet')"></div>
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5">
+            <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
+            <div class="text-lg font-extrabold mb-3">이 사용 기록을 취소할까요?</div>
+            <div class="bg-gray-50 rounded-xl px-4 py-3 mb-3">
+                <p id="cancelTargetDescription" class="text-sm font-bold"></p>
+                <p id="cancelTargetMeta" class="text-xs text-gray-400 mt-0.5"></p>
+            </div>
+            <div id="cancelPreviewArea" class="mb-3"></div>
+            <div class="flex gap-2">
+                <button type="button" onclick="closeSheet('cancelSheet')"
+                        class="h-13 px-5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">아니요</button>
+                <button type="button" onclick="submitCancelConfirm()"
+                        class="flex-1 h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">취소하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openSheet(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
+
+        var cancelConfirmForm = null;
+        function submitCancelConfirm() { if (cancelConfirmForm) cancelConfirmForm.submit(); }
+
+        document.querySelectorAll('.cancel-open-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var form = btn.closest('.cancel-form');
+                cancelConfirmForm = form;
+                document.getElementById('cancelTargetDescription').textContent = form.dataset.description || '사용 내역';
+                var amount = Number(form.dataset.amount).toLocaleString('ko-KR');
+                var brand = form.dataset.brand ? form.dataset.brand + ' · ' : '';
+                document.getElementById('cancelTargetMeta').textContent = brand + '오늘 · ' + amount + 'P 사용';
+                htmx.ajax('POST', '/history/points/cancel/preview', {
+                    target: '#cancelPreviewArea',
+                    values: { ledgerId: form.querySelector('[name=ledgerId]').value }
+                });
+                openSheet('cancelSheet');
+            });
+        });
+    </script>
 </body>
 </html>

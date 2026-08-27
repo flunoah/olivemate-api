@@ -16,6 +16,7 @@ public class ProductSearchPageController {
     @GetMapping("/products/search")
     public String search(@RequestParam(required = false) String productName, Model model) {
         model.addAttribute("results", productSearchService.search(productName));
+        model.addAttribute("query", productName);
         return "fragments/product-search-results :: results";
     }
 }

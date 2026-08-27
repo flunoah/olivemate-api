@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="sheet">
+        <!-- 알림 설정 바텀시트 (S15 최초 배너 / S18 내 정보 설정 공용) -->
+        <div id="notificationSettingsSheet" class="hidden fixed inset-0 z-[65]">
+            <div class="absolute inset-0 bg-black/40" onclick="closeSheet('notificationSettingsSheet')"></div>
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5">
+                <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
+                <div class="text-lg font-extrabold mb-1">받고 싶은 알림을 골라주세요</div>
+                <p class="text-xs text-gray-400 mb-4 leading-relaxed">브라우저 권한을 한 번 허용하면 앱을 열지 않아도 알려드려요. 언제든 여기서 끌 수 있어요.</p>
+                <div class="flex flex-col gap-1">
+                    <label class="flex items-center justify-between py-2">
+                        <span>
+                            <span class="text-sm font-bold block">소멸 임박</span>
+                            <span class="text-xs text-gray-400">만료 3일 전 오전 9시</span>
+                        </span>
+                        <input type="checkbox" id="chExpiring" class="w-5 h-5 accent-brand-strong" checked/>
+                    </label>
+                    <label class="flex items-center justify-between py-2">
+                        <span>
+                            <span class="text-sm font-bold block">적립 완료</span>
+                            <span class="text-xs text-gray-400">근무 다음날 오전 1시</span>
+                        </span>
+                        <input type="checkbox" id="chEarned" class="w-5 h-5 accent-brand-strong" checked/>
+                    </label>
+                    <label class="flex items-center justify-between py-2">
+                        <span>
+                            <span class="text-sm font-bold block">관리자 조정</span>
+                            <span class="text-xs text-gray-400">근무일·포인트가 바뀔 때</span>
+                        </span>
+                        <input type="checkbox" id="chAdmin" class="w-5 h-5 accent-brand-strong" checked/>
+                    </label>
+                </div>
+                <p id="notificationSettingsError" class="text-xs text-red-500 mt-2" style="display:none"></p>
+                <button type="button" id="notificationSettingsSaveBtn" onclick="saveNotificationChannels()"
+                        class="w-full h-13 mt-4 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">저장</button>
+                <button type="button" onclick="closeSheet('notificationSettingsSheet')"
+                        class="w-full h-13 mt-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">닫기</button>
+            </div>
+        </div>
+
+        <script src="/js/push.js"></script>
+        <script>
+            function openNotificationSettingsSheet() { openSheet('notificationSettingsSheet'); }
+
+            function saveNotificationChannels() {
+                var btn = document.getElementById('notificationSettingsSaveBtn');
+                var errorEl = document.getElementById('notificationSettingsError');
+                errorEl.style.display = 'none';
+                btn.disabled = true;
+
+                var apply = function () {
+                    return updatePushChannels(
+                        document.getElementById('chEarned').checked,
+                        document.getElementById('chExpiring').checked,
+                        document.getElementById('chAdmin').checked
+                    );
+                };
+
+                var ready = isPushSupported()
+                    ? getExistingSubscription().then(function (sub) { return sub ? true : subscribeToPush(); })
+                    : Promise.resolve(false);
+
+                ready.then(function (subscribed) {
+                    if (!subscribed) {
+                        errorEl.textContent = '브라우저 알림 권한을 허용해야 설정을 저장할 수 있어요.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                    return apply().then(function (ok) {
+                        if (ok) {
+                            closeSheet('notificationSettingsSheet');
+                        } else {
+                            errorEl.textContent = '저장에 실패했어요. 잠시 후 다시 시도해주세요.';
+                            errorEl.style.display = 'block';
+                        }
+                    });
+                }).finally(function () { btn.disabled = false; });
+            }
+        </script>
+    </th:block>
+</body>
+</html>

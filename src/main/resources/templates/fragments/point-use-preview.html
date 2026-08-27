@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="preview">
+        <p th:if="${previewError}" th:text="${previewError}" class="text-red-500 text-sm"></p>
+        <div th:if="${preview != null}" class="flex flex-col">
+            <div class="flex items-center gap-2 mb-1">
+                <p class="text-xs font-bold text-gray-500">이렇게 차감돼요</p>
+                <span class="text-[10px] font-bold text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">만료 임박 순</span>
+            </div>
+            <div th:each="l : ${preview.lines()}" class="flex items-center justify-between text-sm py-1.5 border-t border-gray-100 first:border-t-0">
+                <span class="text-gray-600">
+                    <span class="font-semibold" th:text="${l.expiredAt() != null} ? (${#temporals.format(l.expiredAt(), 'M/d')} + ' 만료분') : '만료일 없음 (초기 포인트)'"></span>
+                    <span class="block text-gray-300 text-xs mt-0.5">
+                        <span th:if="${l.grantedAt() != null}" th:text="${#temporals.format(l.grantedAt(), 'M/d')} + ' 적립 · '"></span>
+                        <span th:text="'잔여 ' + ${#numbers.formatInteger(l.remainingBefore(), 1, 'COMMA')} + 'P'"></span>
+                        <span th:if="${l.expiredAt() == null}"> · 항상 마지막</span>
+                    </span>
+                </span>
+                <span class="font-semibold text-red-500" th:text="'-' + ${#numbers.formatInteger(l.amount(), 1, 'COMMA')} + 'P'"></span>
+            </div>
+            <div class="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 font-bold">
+                <span>사용 후 잔액</span>
+                <span th:text="${#numbers.formatInteger(preview.resultingBalance(), 1, 'COMMA')} + 'P'"></span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

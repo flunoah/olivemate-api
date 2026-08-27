@@ -3,11 +3,11 @@ package com.oliveyoung.mate.presentation.web;
 import com.oliveyoung.mate.application.point.PointService;
 import com.oliveyoung.mate.application.point.command.CancelUseCommand;
 import com.oliveyoung.mate.application.point.result.LedgerHistoryResult;
+import com.oliveyoung.mate.application.point.result.PointCancelPreviewResult;
 import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
 import com.oliveyoung.mate.domain.point.model.PointLedger.LedgerType;
 import com.oliveyoung.mate.presentation.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,22 +35,9 @@ public class HistoryPageController {
     private final PointService pointService;
 
     @GetMapping("/history")
-    public String history(
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            Model model) {
+    public String history(@RequestParam(required = false, defaultValue = "ALL") String type, Model model) {
         UUID crewId = SecurityUtils.authenticatedCrewId();
         LocalDate today = LocalDate.now(KST);
-
-        LocalDate base;
-        if (year != null && month != null) {
-            base = LocalDate.of(year, month, 1);
-        } else if (date != null) {
-            base = date.withDayOfMonth(1);
-        } else {
-            base = today.withDayOfMonth(1);
-        }
 
         List<LedgerHistoryResult> ledgers;
         try {
@@ -59,44 +46,35 @@ public class HistoryPageController {
             ledgers = List.of();
         }
 
-        Map<LocalDate, List<LedgerHistoryResult>> byGrantedDate = ledgers.stream()
-            .filter(l -> l.grantedAt() != null)
-            .collect(Collectors.groupingBy(l -> l.grantedAt().toLocalDate()));
-
         Map<LocalDate, Long> expiringByDate = ledgers.stream()
             .filter(l -> l.remaining() > 0 && l.expiredAt() != null && !l.expiredAt().toLocalDate().isBefore(today))
             .collect(Collectors.groupingBy(l -> l.expiredAt().toLocalDate(), Collectors.summingLong(LedgerHistoryResult::remaining)));
 
-        LocalDate selectedDate = date != null ? date
-            : (today.getYear() == base.getYear() && today.getMonth() == base.getMonth() ? today : null);
-
-        LocalDate prev = base.minusMonths(1);
-        LocalDate next = base.plusMonths(1);
-
-        model.addAttribute("year", base.getYear());
-        model.addAttribute("month", base.getMonthValue());
-        model.addAttribute("prevYear", prev.getYear());
-        model.addAttribute("prevMonth", prev.getMonthValue());
-        model.addAttribute("nextYear", next.getYear());
-        model.addAttribute("nextMonth", next.getMonthValue());
-        model.addAttribute("selectedDate", selectedDate);
-        model.addAttribute("days", buildDays(base, today, selectedDate, byGrantedDate, expiringByDate));
-        model.addAttribute("selectedLedgers", selectedDate != null
-            ? buildSelectedLedgers(byGrantedDate.getOrDefault(selectedDate, List.of()), today)
-            : List.of());
-        model.addAttribute("summary", buildSummary(ledgers, expiringByDate, base));
+        model.addAttribute("type", type);
+        model.addAttribute("groups", buildDateGroups(filterByType(ledgers, type), today));
+        model.addAttribute("summary", buildSummary(ledgers, expiringByDate, today.withDayOfMonth(1)));
         model.addAttribute("expiryBanner", nearestExpiry(ledgers, today));
-        model.addAttribute("prevMonthLedgers", buildPrevMonthLedgers(ledgers, prev, today));
 
         return "history";
+    }
+
+    @PostMapping("/history/points/cancel/preview")
+    public String previewCancel(@RequestParam UUID ledgerId, Model model) {
+        UUID crewId = SecurityUtils.authenticatedCrewId();
+        try {
+            PointCancelPreviewResult preview = pointService.previewCancel(crewId, ledgerId);
+            model.addAttribute("preview", preview);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("previewError", e.getMessage());
+        }
+        model.addAttribute("ledgerId", ledgerId);
+        return "fragments/point-cancel-preview :: preview";
     }
 
     @PostMapping("/history/points/cancel")
     public String cancel(
             @RequestParam UUID ledgerId,
-            @RequestParam int year,
-            @RequestParam int month,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false, defaultValue = "ALL") String type,
             RedirectAttributes redirectAttributes) {
         UUID crewId = SecurityUtils.authenticatedCrewId();
         try {
@@ -105,43 +83,37 @@ public class HistoryPageController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        String redirect = "redirect:/history?year=" + year + "&month=" + month;
-        return date != null ? redirect + "&date=" + date : redirect;
+        return "redirect:/history?type=" + type;
     }
 
-    // ── 달력 그리드 (일=0~토=6, 앞쪽 빈칸 패딩) ─────
-    private static List<DayCell> buildDays(
-            LocalDate base, LocalDate today, LocalDate selectedDate,
-            Map<LocalDate, List<LedgerHistoryResult>> byGrantedDate,
-            Map<LocalDate, Long> expiringByDate) {
-        LocalDate first = base;
-        LocalDate last = base.withDayOfMonth(base.lengthOfMonth());
-        int leadingBlanks = first.getDayOfWeek().getValue() % 7;
-
-        List<DayCell> days = new ArrayList<>();
-        for (int i = 0; i < leadingBlanks; i++) days.add(DayCell.empty());
-
-        for (LocalDate d = first; !d.isAfter(last); d = d.plusDays(1)) {
-            List<LedgerHistoryResult> onDate = byGrantedDate.getOrDefault(d, List.of());
-            boolean isToday = d.equals(today);
-            boolean isSelected = d.equals(selectedDate);
-            String cellClass = isSelected ? "bg-green-600 text-white"
-                : isToday ? "bg-green-50 text-green-700"
-                : "text-gray-600 hover:bg-gray-50";
-            days.add(new DayCell(
-                d, d.getDayOfMonth(), false,
-                isToday, isSelected, cellClass,
-                onDate.stream().anyMatch(l -> l.ledgerType() == LedgerType.INIT),
-                onDate.stream().anyMatch(l -> l.ledgerType() == LedgerType.EARN),
-                onDate.stream().anyMatch(l -> l.ledgerType() == LedgerType.USE),
-                onDate.stream().anyMatch(l -> l.ledgerType() == LedgerType.EXPIRE),
-                expiringByDate.containsKey(d)
-            ));
-        }
-        return days;
+    // ── 필터 탭(전체/적립/사용/소멸) ─────────────────
+    private static List<LedgerHistoryResult> filterByType(List<LedgerHistoryResult> ledgers, String type) {
+        return switch (type) {
+            case "EARN" -> ledgers.stream().filter(l -> l.ledgerType() == LedgerType.EARN || l.ledgerType() == LedgerType.INIT).toList();
+            case "USE" -> ledgers.stream().filter(l -> l.ledgerType() == LedgerType.USE).toList();
+            case "EXPIRE" -> ledgers.stream().filter(l -> l.ledgerType() == LedgerType.EXPIRE).toList();
+            default -> ledgers;
+        };
     }
 
-    // ── 선택한 날짜 상세 (USE는 txId로 합산해 되돌리기 가능 여부까지 계산) ─
+    // ── 날짜별 그룹(최신 날짜 순) — grantedAt이 실제 표시 기준일 ─
+    // (USE는 grantedAt에 usedAt이, EXPIRE는 expiredAt이 그대로 들어있다 — PointLedger 참고)
+    private static List<DateGroupView> buildDateGroups(List<LedgerHistoryResult> ledgers, LocalDate today) {
+        Map<LocalDate, List<LedgerHistoryResult>> byDate = ledgers.stream()
+            .collect(Collectors.groupingBy(l -> l.grantedAt().toLocalDate()));
+
+        return byDate.keySet().stream()
+            .sorted(Comparator.reverseOrder())
+            .map(d -> new DateGroupView(dateHeader(d, today), buildSelectedLedgers(byDate.get(d), today)))
+            .toList();
+    }
+
+    private static String dateHeader(LocalDate date, LocalDate today) {
+        String label = date.getMonthValue() + "월 " + date.getDayOfMonth() + "일";
+        return date.equals(today) ? "오늘 · " + label : label;
+    }
+
+    // ── 같은 날짜의 원장 목록 (USE는 txId로 합산해 되돌리기 가능 여부까지 계산) ─
     private static List<LedgerRowView> buildSelectedLedgers(List<LedgerHistoryResult> onDate, LocalDate today) {
         List<LedgerRowView> rows = new ArrayList<>();
 
@@ -203,33 +175,7 @@ public class HistoryPageController {
             .orElse(null);
     }
 
-    // ── 지난달 적립 내역 ─────────────────────────────
-    private static List<PrevMonthLedgerView> buildPrevMonthLedgers(List<LedgerHistoryResult> ledgers, LocalDate prevMonth, LocalDate today) {
-        return ledgers.stream()
-            .filter(l -> (l.ledgerType() == LedgerType.EARN || l.ledgerType() == LedgerType.INIT) && inMonth(l.grantedAt(), prevMonth))
-            .sorted(Comparator.comparing(LedgerHistoryResult::grantedAt).reversed())
-            .map(l -> new PrevMonthLedgerView(
-                l.amount(), l.grantedAt().toLocalDate(), l.createdAt().toLocalDate(),
-                l.expiredAt() != null ? dDayLabel(today, l.expiredAt().toLocalDate()) : ""
-            ))
-            .toList();
-    }
-
-    private static String dDayLabel(LocalDate today, LocalDate expiry) {
-        long d = ChronoUnit.DAYS.between(today, expiry);
-        if (d < 0) return "만료됨";
-        if (d == 0) return "D-day";
-        return "D-" + d;
-    }
-
-    public record DayCell(
-        LocalDate date, Integer dayOfMonth, boolean blank, boolean today, boolean selected, String cellClass,
-        boolean hasInit, boolean hasEarn, boolean hasUse, boolean hasExpire, boolean hasExpiring) {
-
-        static DayCell empty() {
-            return new DayCell(null, null, true, false, false, "", false, false, false, false, false);
-        }
-    }
+    public record DateGroupView(String dateLabel, List<LedgerRowView> rows) {}
 
     public record LedgerRowView(
         String icon, String label, String sign, long amount, String description, String brand,
@@ -238,6 +184,4 @@ public class HistoryPageController {
     public record SummaryView(long earned, long used, long expiring) {}
 
     public record ExpiryBannerView(LocalDate expiredAt, long amount, long dDay) {}
-
-    public record PrevMonthLedgerView(long amount, LocalDate grantedDate, LocalDate createdDate, String dDayLabel) {}
 }

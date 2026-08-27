@@ -1,5 +1,6 @@
 package com.oliveyoung.mate.infrastructure.notification;
 
+import com.oliveyoung.mate.domain.notification.model.PushSubscription;
 import com.oliveyoung.mate.domain.notification.repository.PushSubscriptionRepository;
 import com.oliveyoung.mate.domain.point.vo.CrewId;
 import com.oliveyoung.mate.domain.point.vo.Money;
@@ -47,7 +48,7 @@ public class WebPushClient {
              "body":"어제 근무하신 %sP가 적립됐어요.",
              "deepLink":"/history?date=%s"}
             """.formatted(amountText, grantedAt);
-        sendToSubscriptions(crewId, payload);
+        sendToSubscriptions(crewId, payload, PushSubscription::isNotifyPointEarned);
     }
 
     public void sendPointExpiring(CrewId crewId, Money amount, LocalDate expiryDate, int daysLeft) {
@@ -57,11 +58,22 @@ public class WebPushClient {
              "body":"%sP가 %d일 후 소멸 예정이에요.",
              "deepLink":"/history?date=%s"}
             """.formatted(amountText, daysLeft, expiryDate);
-        sendToSubscriptions(crewId, payload);
+        sendToSubscriptions(crewId, payload, PushSubscription::isNotifyPointExpiring);
     }
 
-    private void sendToSubscriptions(CrewId crewId, String payload) {
-        var subscriptions = subscriptionRepository.findByCrewId(crewId);
+    public void sendAdminAdjusted(CrewId crewId, LocalDate workDate) {
+        String payload = """
+            {"title":"관리자가 근무일을 조정했어요 🛠️",
+             "body":"%s 근무 내역이 관리자에 의해 조정됐어요.",
+             "deepLink":"/history?date=%s"}
+            """.formatted(workDate, workDate);
+        sendToSubscriptions(crewId, payload, PushSubscription::isNotifyAdminAdjusted);
+    }
+
+    private void sendToSubscriptions(CrewId crewId, String payload, java.util.function.Predicate<PushSubscription> channelFilter) {
+        var subscriptions = subscriptionRepository.findByCrewId(crewId).stream()
+            .filter(channelFilter)
+            .toList();
         if (subscriptions.isEmpty()) {
             return;
         }

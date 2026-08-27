@@ -37,4 +37,13 @@ public class PushSubscriptionService {
     public void unsubscribe(String endpoint) {
         pushSubscriptionRepository.deleteByEndpoint(endpoint);
     }
+
+    // 크루가 가진 모든 기기 구독에 동일하게 적용한다(기기별로 다르게 관리하지 않음)
+    @Transactional
+    public void updateChannels(CrewId crewId, boolean notifyPointEarned, boolean notifyPointExpiring, boolean notifyAdminAdjusted) {
+        pushSubscriptionRepository.findByCrewId(crewId).forEach(sub -> {
+            sub.updateChannels(notifyPointEarned, notifyPointExpiring, notifyAdminAdjusted);
+            pushSubscriptionRepository.save(sub);
+        });
+    }
 }

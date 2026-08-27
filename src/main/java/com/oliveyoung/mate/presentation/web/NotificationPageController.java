@@ -51,7 +51,11 @@ public class NotificationPageController {
         String deepLink, boolean read, String timeAgo) {}
 
     private static NotificationViewItem toViewItem(NotificationResult r) {
-        String emoji = "POINT_EXPIRING".equals(r.type()) ? "⏰" : "🎉";
+        String emoji = switch (r.type()) {
+            case "POINT_EXPIRING" -> "⏰";
+            case "ADMIN_ADJUSTED" -> "🛠️";
+            default -> "🎉";
+        };
         return new NotificationViewItem(r.id(), emoji, r.title(), r.body(),
             r.deepLink(), r.read(), timeAgo(r.sentAt()));
     }

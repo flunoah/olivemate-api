@@ -10,6 +10,8 @@
 
 ## 🟡 Medium
 
+- [ ] `[BE]` S16(`mypage`) 프로필 카드 — "매장" 필드는 `Crew` 도메인에 아예 없어 표시하지 못함(`사번`은 `loginId`로 대체 표시). 매장 데이터를 어디서 가져올지 결정되면 `crew` 테이블에 컬럼 추가 + 회원가입 플로우까지 이어지는 별도 작업 필요
+- [ ] `[BE]` S18 알림 설정 시트가 현재 구독의 채널별 on/off 상태를 조회하는 API가 없어, 시트를 열 때마다 체크박스가 항상 전부 켜진 상태로 보임(저장은 정상 동작). `GET /push/subscribe/channels` 추가하면 해결
 - [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
 - [x] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`) — Phase 6에서 `/history`가 Thymeleaf `HistoryPageController`로 이관되며 `?date=` 쿼리파라미터를 서버에서 직접 처리하게 되어 해결(Next.js `useSearchParams` 구현은 더 이상 불필요)
 - [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
@@ -49,6 +51,16 @@
 
 ## ✅ Done
 
+- [x] **Myjaso A 전체화면 리디자인 S8~S18 전체 구현** — Claude Design 시안(`f885925`에서 이미 반영된 S1~S7 이후 나머지). 3개 신규 백엔드 기능 포함:
+  - 포인트 사용 3단계 플로우(S8~S10): `PointService.previewUse()`가 `Point.use()`를 커밋 없이 인메모리로만 실행해 FIFO 차감 미리보기 제공(`POST /dashboard/points/preview`). 완료 화면은 기존 10초 되돌리기 카운트다운을 제거하고 "오늘 안에 내역에서 취소" 정적 안내로 교체
+  - 상품 등록·정정 요청(S11) — `ProductRequest` 신규 도메인(`Product`와 동일 레이어 구조), 크루 제출(`POST /products/requests`) + 관리자 승인/반려(`admin-product-requests.html`). 승인 시 NEW는 `product`에 신규 행(가격 미상이면 0원), CORRECTION은 연결 상품 갱신. 마이그레이션 `V5`
+  - 사용 취소 확인(S13) — `PointService.previewCancel()`이 같은 커밋 없는 미리보기 기법으로 복구처 원장을 보여줌(`POST /history/points/cancel/preview`)
+  - 관리자 조정 알림(S14) — `NotificationType.ADMIN_ADJUSTED` 신규. 관리자 소급 지급 시 기존 일반 "포인트 적립" 알림과 **별도로 추가 발송**됨(의도된 중복, `PointService.grantPointForDate()`에서 직접 이벤트 발행)
+  - 채널별 푸시 알림(S15/S18) — `push_subscriptions`에 `notify_point_earned`/`notify_point_expiring`/`notify_admin_adjusted` 3개 boolean 컬럼(마이그레이션 `V6`), `PATCH /push/subscribe/channels`로 토글. 크루의 모든 기기 구독에 동일 적용(기기별 개별 설정 아님)
+  - 요일 변경 영향 미리보기(S17) — `ScheduleService.previewChange()`가 `PointPolicy.earnAmount() × 4.33주`로 월 예상 적립 변화를 저장 없이 계산(`GET /mypage/schedule/preview`). 요일 이름 diff 없이 개수 기준 요약만 제공
+  - `history`/`notifications`/`mypage` 템플릿 브랜드 팔레트(`#82DC28`/`#3F7D0A`/`#FF7878`) 전면 재작성
+  - 상세 계획: `/Users/seon/.claude/plans/foamy-tickling-trinket.md`
+  - **2026-08-27 후속**: 위 "전체 구현"이 실제 Claude Design 원본(S7~S13)과 디테일이 상당히 어긋나 있었음을 발견 — 근무등록 시트(S7)를 요일 토글+일괄 저장 방식으로, 포인트 사용(S8~S10)을 상품→금액→완료 3단계로, 내역(S12)을 캘린더 대신 필터+시간순 리스트로 재작업. 상세: `/Users/seon/.claude/plans/jazzy-petting-tide.md`
 - [x] 제품명 자동완성/추천 — LLM이 아니라 상품 카탈로그(`product` 테이블, 엑셀 업로드로 관리자가 동기화) 대상 키워드 검색(`LIKE`, 최대 20건)으로 구현. `/dashboard` 포인트 사용 폼에서 htmx 라이브서치(입력 후 300ms)로 상품명 자동완성 + 선택 시 브랜드를 `point_ledger.brand`(`V4`)에 저장, `/history`에서 브랜드 표시. 관리자 엑셀 업로드는 `/admin/products`(세션 `ROLE_ADMIN`)
 - [x] `[BE]` Thymeleaf+htmx 마이그레이션 Phase 0(세션 기반 인증 전환) — `spring-boot-starter-thymeleaf` 추가. `/api/v1/**`는 기존 stateless JWT `SecurityFilterChain`을 그대로 유지(회귀 없음, `mate-front`가 컷오버 전까지 계속 의존), 신규 `/login` 페이지는 별도 세션 기반 `SecurityFilterChain`(폼 로그인 + CSRF + 로그아웃, `@Order`로 두 체인 분리)으로 구성. `CrewPrincipal`(`UserDetails`)로 JWT/세션 두 인증 경로의 principal 타입 통일, `SecurityUtils`도 갱신. 디자인은 Tailwind CSS(Node 없이 standalone CLI + Gradle `tailwindBuild` 태스크)로 `mate-front`와 동일한 클래스 재사용
 - [x] 소멸 임박 알림 (D-7/D-3/D-1) — `PointExpiryReminderScheduler`(매일 07:00 KST) → `PointService.remindExpiringPoints()` → `PointExpiringEvent` → `PointExpiringNotificationListener`(기존 `PointEarnedNotificationListener`와 동일 패턴)가 인앱 알림 저장 + 웹푸시 발송. 겸사겸사 `Notification.pointEarned()`/`WebPushClient`의 잘못된 deepLink(`/points/history` → `/history`, 존재하지 않는 라우트였음)도 수정

@@ -38,6 +38,16 @@ CrewCheck 백엔드 REST API 명세.
 **쿼리**: `?endpoint={url}` (URL 인코딩 필수)
 **응답** `200` — `ApiResponse<Void>`
 
+### PATCH /push/subscribe/channels
+
+채널별 알림 on/off. 크루가 가진 모든 기기 구독에 동일하게 적용된다(기기별 개별 설정 아님).
+
+```json
+{ "notifyPointEarned": true, "notifyPointExpiring": true, "notifyAdminAdjusted": false }
+```
+
+**응답** `200` — `ApiResponse<Void>`
+
 ---
 
 ## Admin — 배치 수동 실행 (`X-Admin-Key` 인증)
@@ -75,6 +85,26 @@ CrewCheck 백엔드 REST API 명세.
 **요청**: `multipart/form-data`, 필드명 `file` (xlsx/xls, 최대 10MB). 열 순서: 상품코드/브랜드/상품명/정가/판매가, 1행은 헤더로 스킵.
 **동작**: `goodsNo` 기준 upsert. 행 단위 파싱 실패는 스킵하고 나머지는 계속 처리.
 **응답**: `redirect:/admin/products` + flash attribute `result`(`ProductUploadResult(total, synced, failed)`) 또는 `error`.
+
+### POST /products/requests
+
+`ProductRequestPageController`. 세션 인증. `/dashboard` 포인트 사용 시트에서 상품을 못 찾았거나(`requestType=NEW`) 매칭된 상품 정보가 틀렸을 때(`requestType=CORRECTION`, `linkedProductId` 필수) 제출.
+
+**폼 필드**: `requestType`(`NEW`/`CORRECTION`), `productName`, `brand`(선택), `price`(선택, 원), `note`(선택), `linkedProductId`(`CORRECTION`일 때 필수)
+**응답**: `redirect:/dashboard` + flash `message`
+
+### GET /admin/product-requests
+
+`AdminProductRequestPageController`. 세션 `ROLE_ADMIN` 필요. `PENDING` 상태 요청 목록.
+
+### POST /admin/product-requests/{id}/approve
+
+승인. `NEW`는 `product`에 신규 행 생성(가격 미상 시 0원), `CORRECTION`은 `linkedProductId` 상품을 갱신.
+**응답**: `redirect:/admin/product-requests` + flash `message` 또는 `error`(이미 처리된 요청 등)
+
+### POST /admin/product-requests/{id}/reject
+
+반려. **응답**: `redirect:/admin/product-requests` + flash `message`
 
 ---
 

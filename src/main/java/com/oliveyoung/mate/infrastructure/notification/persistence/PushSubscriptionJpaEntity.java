@@ -32,14 +32,27 @@ public class PushSubscriptionJpaEntity {
     @Column(nullable = false)
     private LocalDateTime registeredAt;
 
+    @Column(nullable = false)
+    private boolean notifyPointEarned;
+
+    @Column(nullable = false)
+    private boolean notifyPointExpiring;
+
+    @Column(nullable = false)
+    private boolean notifyAdminAdjusted;
+
     @Builder
     public PushSubscriptionJpaEntity(UUID id, UUID crewId, String endpoint,
-                                      String p256dh, String auth, LocalDateTime registeredAt) {
+                                      String p256dh, String auth, LocalDateTime registeredAt,
+                                      boolean notifyPointEarned, boolean notifyPointExpiring, boolean notifyAdminAdjusted) {
         this.id = id;
         this.crewId = crewId;
         this.endpoint = endpoint;
         this.p256dh = p256dh;
         this.auth = auth;
         this.registeredAt = registeredAt;
+        this.notifyPointEarned = notifyPointEarned;
+        this.notifyPointExpiring = notifyPointExpiring;
+        this.notifyAdminAdjusted = notifyAdminAdjusted;
     }
 }

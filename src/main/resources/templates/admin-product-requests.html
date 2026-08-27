@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-2xl mx-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <a th:href="@{/admin}" class="text-sm text-gray-400 hover:text-gray-600">← 관리자 홈</a>
+                <h1 class="text-xl font-bold text-gray-800">상품 등록·정정 요청</h1>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="text-sm text-gray-400 hover:text-red-500">로그아웃</button>
+            </form>
+        </div>
+
+        <p th:if="${message}" th:text="${message}" class="text-green-600 text-sm mb-4"></p>
+        <p th:if="${error}" th:text="${error}" class="text-red-500 text-sm mb-4"></p>
+
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div th:each="r : ${requests}" class="border-t border-gray-100 first:border-t-0 px-5 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                              th:text="${r.requestType.name() == 'NEW'} ? '신규' : '정정'"
+                              th:classappend="${r.requestType.name() == 'NEW'} ? 'bg-brand text-brand-ink' : 'bg-orange-100 text-orange-600'"></span>
+                        <span class="font-semibold ml-2" th:text="${r.productName}"></span>
+                        <span class="text-gray-400 text-sm ml-1" th:text="${r.brand}"></span>
+                    </div>
+                    <span th:if="${r.price != null}" class="text-sm text-gray-500" th:text="${#numbers.formatInteger(r.price.amount(), 1, 'COMMA')} + '원'"></span>
+                </div>
+                <p th:if="${r.note}" class="text-sm text-gray-400 mt-1" th:text="${r.note}"></p>
+                <div class="flex gap-2 mt-3">
+                    <form th:action="@{/admin/product-requests/{id}/approve(id=${r.id})}" method="post">
+                        <button type="submit" class="text-xs font-bold text-brand-strong">승인</button>
+                    </form>
+                    <form th:action="@{/admin/product-requests/{id}/reject(id=${r.id})}" method="post">
+                        <button type="submit" class="text-xs font-bold text-gray-400 hover:text-red-500">반려</button>
+                    </form>
+                </div>
+            </div>
+            <p th:if="${requests.isEmpty()}" class="px-5 py-8 text-center text-gray-400 text-sm">대기 중인 요청이 없어요.</p>
+        </div>
+    </div>
+</body>
+</html>

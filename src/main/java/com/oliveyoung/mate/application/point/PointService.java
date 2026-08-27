@@ -7,11 +7,15 @@ import com.oliveyoung.mate.application.point.command.GrantPointManualCommand;
 import com.oliveyoung.mate.application.point.command.InitPointCommand;
 import com.oliveyoung.mate.application.point.command.UsePointCommand;
 import com.oliveyoung.mate.application.point.result.LedgerHistoryResult;
+import com.oliveyoung.mate.application.point.result.LifetimeStatsResult;
 import com.oliveyoung.mate.application.point.result.PointBalanceResult;
+import com.oliveyoung.mate.application.point.result.PointCancelPreviewResult;
+import com.oliveyoung.mate.application.point.result.PointUsePreviewResult;
 import com.oliveyoung.mate.application.point.result.UsePointResult;
 import com.oliveyoung.mate.domain.attendance.model.WorkDay;
 import com.oliveyoung.mate.domain.attendance.repository.WorkDayRepository;
 import com.oliveyoung.mate.domain.point.PointAccountNotFoundException;
+import com.oliveyoung.mate.domain.point.event.AdminAdjustedEvent;
 import com.oliveyoung.mate.domain.point.event.PointExpiringEvent;
 import com.oliveyoung.mate.domain.point.model.Point;
 import com.oliveyoung.mate.domain.point.model.PointLedger;
@@ -31,8 +35,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -133,6 +140,26 @@ public class PointService {
         );
     }
 
+    // ── 근무일당 적립액 (근무 등록 시트 미리보기용) ──
+    @Transactional(readOnly = true)
+    public long getEarnAmount() {
+        return policyRepository.findActivePolicy().orElse(PointPolicy.defaultPolicy()).earnAmount();
+    }
+
+    // ── 누적 통계 (전체 기간) ──────────────────────
+    @Transactional(readOnly = true)
+    public LifetimeStatsResult getLifetimeStats(UUID crewId) {
+        CrewId cid = CrewId.of(crewId);
+        LocalDateTime from = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusYears(1);
+
+        long earned = pointRepository.sumByTypeAndPeriod(cid, "EARN", from, to).amount()
+            + pointRepository.sumByTypeAndPeriod(cid, "INIT", from, to).amount();
+        long expired = pointRepository.sumByTypeAndPeriod(cid, "EXPIRE", from, to).amount();
+
+        return new LifetimeStatsResult(earned, expired);
+    }
+
     // ── 내역 조회 ──────────────────────────────────
     @Transactional(readOnly = true)
     public List<LedgerHistoryResult> getLedgerHistory(UUID crewId) {
@@ -207,6 +234,71 @@ public class PointService {
         pointRepository.deleteLedgersByTxId(useLedger.getTxId());
     }
 
+    // ── 포인트 사용 미리보기 (커밋 없음, FIFO 차감 내역만 계산) ──
+    @Transactional(readOnly = true)
+    public PointUsePreviewResult previewUse(UUID crewId, long amount, LocalDate usedAt) {
+        CrewId cid = CrewId.of(crewId);
+        Point point = pointRepository.findByCrewId(cid)
+            .orElseThrow(() -> new PointAccountNotFoundException(cid));
+
+        Map<UUID, Long> remainingBefore = point.getLedgers().stream()
+            .collect(Collectors.toMap(PointLedger::getLedgerId, l -> l.getRemaining().amount()));
+
+        LocalDateTime usedAtDateTime = usedAt != null
+            ? usedAt.atStartOfDay(ZoneId.of("Asia/Seoul")).toLocalDateTime()
+            : LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+
+        // 저장하지 않는다 — point.use()는 인메모리 애그리거트만 변경한다
+        point.use(Money.of(amount), UUID.randomUUID(), usedAtDateTime, null, null);
+
+        List<PointUsePreviewResult.Line> lines = point.getDirtyLedgers().stream()
+            .sorted(Comparator.comparing(l -> l.getExpiredAt() == null ? LocalDateTime.MAX : l.getExpiredAt()))
+            .map(l -> new PointUsePreviewResult.Line(
+                l.getGrantedAt(),
+                l.getExpiredAt(),
+                remainingBefore.get(l.getLedgerId()),
+                remainingBefore.get(l.getLedgerId()) - l.getRemaining().amount()
+            ))
+            .toList();
+
+        return new PointUsePreviewResult(lines, point.getBalance().amount());
+    }
+
+    // ── 포인트 사용 취소 미리보기 (커밋 없음, 복원 내역만 계산) ──
+    @Transactional(readOnly = true)
+    public PointCancelPreviewResult previewCancel(UUID crewId, UUID ledgerId) {
+        CrewId cid = CrewId.of(crewId);
+
+        PointLedger useLedger = pointRepository.findLedgerById(ledgerId)
+            .orElseThrow(() -> new IllegalArgumentException("사용 내역을 찾을 수 없습니다."));
+        if (useLedger.getType() != PointLedger.LedgerType.USE) {
+            throw new IllegalArgumentException("사용 내역이 아닙니다.");
+        }
+        if (!useLedger.getCrewId().equals(cid)) {
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+
+        Point point = pointRepository.findByCrewId(cid)
+            .orElseThrow(() -> new PointAccountNotFoundException(cid));
+
+        Map<UUID, Long> remainingBefore = point.getLedgers().stream()
+            .collect(Collectors.toMap(PointLedger::getLedgerId, l -> l.getRemaining().amount()));
+
+        // 저장하지 않는다 — point.cancelUse()는 인메모리 애그리거트만 변경한다
+        point.cancelUse(useLedger.getTxId());
+
+        List<PointCancelPreviewResult.Line> lines = point.getDirtyLedgers().stream()
+            .sorted(Comparator.comparing(l -> l.getExpiredAt() == null ? LocalDateTime.MAX : l.getExpiredAt()))
+            .map(l -> new PointCancelPreviewResult.Line(
+                l.getExpiredAt(),
+                remainingBefore.get(l.getLedgerId()),
+                l.getRemaining().amount() - remainingBefore.get(l.getLedgerId())
+            ))
+            .toList();
+
+        return new PointCancelPreviewResult(lines, point.getBalance().amount());
+    }
+
     // ── 소급 적립 (관리자 전용) ────────────────────
     @Transactional
     public void grantPointForDate(GrantPointManualCommand cmd) {
@@ -222,6 +314,9 @@ public class PointService {
         }
 
         earn(new EarnPointCommand(cmd.crewId(), workDay.getWorkDayId(), cmd.workDate()));
+
+        // 관리자 소급 지급 알림 — earn()의 일반 EARN 알림과 별도로 발송된다(의도된 중복)
+        eventPublisher.publishEvent(new AdminAdjustedEvent(CrewId.of(cmd.crewId()), cmd.workDate()));
     }
 
     // ── Cron/Admin 일괄 처리 ──────────────────────
