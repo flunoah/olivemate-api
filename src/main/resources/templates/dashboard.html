@@ -125,13 +125,10 @@
                     <div class="text-lg font-extrabold mb-3">어떤 상품을 구매했나요?</div>
                     <div class="relative mb-3">
                         <input type="text" name="productName" id="productName" required placeholder="상품명을 입력해 주세요." autocomplete="off"
-                               hx-get="/products/search" hx-trigger="keyup changed delay:300ms" hx-target="#productSearchResults"
                                class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                        <div id="productSearchResults"></div>
                     </div>
-                    <input type="hidden" name="brand" id="productBrand"/>
-                    <button type="button" id="pointsNextBtn" onclick="goToPreview()" disabled
-                            class="w-full h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition disabled:opacity-40">다음</button>
+                    <button type="button" id="pointsNextBtn" onclick="goToPreview()"
+                            class="w-full h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">다음</button>
                 </div>
 
                 <div id="pointsStep2" class="hidden">
@@ -144,17 +141,12 @@
                     </div>
                     <div class="h-1 bg-gray-100 rounded-full mb-4"><div class="h-1 w-2/3 bg-brand rounded-full"></div></div>
 
-                    <div class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 mb-2">
+                    <div class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 mb-4">
                         <div class="min-w-0">
                             <p id="selectedProductName" class="text-sm font-bold truncate"></p>
-                            <p id="selectedProductMeta" class="text-xs text-gray-400"></p>
                         </div>
                         <button type="button" onclick="backToSearch()" class="text-xs font-bold text-gray-400 flex-none ml-2">변경</button>
                     </div>
-                    <button type="button" id="correctionRequestBtn" onclick="openCorrectionRequest()"
-                            class="flex items-center gap-1 text-xs text-gray-400 font-semibold mb-4">
-                        <span>ⓘ</span> 상품명·판매가 다른가요? <span class="text-brand-strong underline">정정 요청</span>
-                    </button>
 
                     <p class="text-xs font-bold text-gray-500 mb-1">사용할 포인트</p>
                     <div class="flex items-center justify-between mb-3">
@@ -171,53 +163,6 @@
 
                     <button type="submit" id="useSubmitBtn"
                             class="w-full h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">사용하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 상품 등록·정정 요청 바텀시트 (S11) -->
-    <div id="productRequestSheet" class="hidden fixed inset-0 z-70">
-        <div class="absolute inset-0 bg-black/40" onclick="closeSheet('productRequestSheet')"></div>
-        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5">
-            <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
-            <div class="text-lg font-extrabold mb-1">관리자에게 요청 보내기</div>
-            <p class="text-sm text-gray-400 mb-4">보낸 내용은 상품 DB에 바로 반영되지 않고, 관리자 확인 후 등록돼요.</p>
-
-            <div class="flex gap-1.5 bg-gray-100 rounded-xl p-1 mb-4">
-                <button type="button" id="tabNew" onclick="setProductRequestType('NEW')"
-                        class="flex-1 h-9 rounded-lg text-sm font-bold transition">신규 등록</button>
-                <button type="button" id="tabCorrection" onclick="setProductRequestType('CORRECTION')"
-                        class="flex-1 h-9 rounded-lg text-sm font-bold transition">정보 정정</button>
-            </div>
-
-            <form th:action="@{/products/requests}" method="post" class="space-y-3">
-                <input type="hidden" name="requestType" id="productRequestType" value="NEW"/>
-                <input type="hidden" name="linkedProductId" id="productRequestLinkedId"/>
-                <div>
-                    <label class="text-xs font-bold text-gray-500 mb-1 block">상품명 <span class="text-red-400">*</span></label>
-                    <input type="text" name="productName" id="productRequestName" required placeholder="상품명"
-                           class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">브랜드</label>
-                        <input type="text" name="brand" id="productRequestBrand" placeholder="브랜드"
-                               class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">판매가</label>
-                        <input type="number" name="price" placeholder="원"
-                               class="w-full h-13 border border-gray-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
-                    </div>
-                </div>
-                <div class="rounded-xl bg-[#F1FCE6] border border-[#CFEFB4] px-4 py-3 text-xs text-[#24450A] font-semibold leading-relaxed">
-                    요청 대기 중에도 사용 등록은 임시 항목으로 진행돼요. 관리자가 승인하면 실제 상품에 자동으로 연결됩니다.
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="closeSheet('productRequestSheet')"
-                            class="h-13 px-5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">닫기</button>
-                    <button type="submit" class="flex-1 h-13 bg-brand hover:bg-brand-strong text-brand-ink hover:text-white font-bold rounded-xl transition">요청 보내기</button>
                 </div>
             </form>
         </div>
@@ -346,53 +291,10 @@
         }
 
         // ── S8~S10 포인트 사용 시트 ─────────────────
-        var selectedProduct = null;
-
-        document.getElementById('productSearchResults').addEventListener('click', function (e) {
-            var correctionBtn = e.target.closest('.product-correction-btn');
-            if (correctionBtn) {
-                openProductRequest('CORRECTION', correctionBtn.dataset.id, correctionBtn.dataset.name, correctionBtn.dataset.brand);
-                return;
-            }
-            var newRequestBtn = e.target.closest('#productNewRequestBtn');
-            if (newRequestBtn) {
-                openProductRequest('NEW', null, newRequestBtn.dataset.name, null);
-                return;
-            }
-            var item = e.target.closest('.product-search-item');
-            if (!item) return;
-            selectedProduct = { id: null, name: item.dataset.name, brand: item.dataset.brand, price: item.dataset.price };
-            document.getElementById('productName').value = item.dataset.name;
-            document.getElementById('productBrand').value = item.dataset.brand;
-            document.getElementById('productSearchResults').innerHTML = '';
-            document.getElementById('pointsNextBtn').disabled = false;
-        });
-
-        function openProductRequest(requestType, linkedProductId, name, brand) {
-            document.getElementById('productRequestLinkedId').value = linkedProductId || '';
-            document.getElementById('productRequestName').value = name || '';
-            document.getElementById('productRequestBrand').value = brand || '';
-            setProductRequestType(requestType);
-            openSheet('productRequestSheet');
-        }
-
-        function openCorrectionRequest() {
-            openProductRequest('CORRECTION', selectedProduct ? selectedProduct.id : null,
-                document.getElementById('productName').value, document.getElementById('productBrand').value);
-        }
-
-        function setProductRequestType(type) {
-            document.getElementById('productRequestType').value = type;
-            var newTab = document.getElementById('tabNew'), corrTab = document.getElementById('tabCorrection');
-            newTab.className = 'flex-1 h-9 rounded-lg text-sm font-bold transition ' + (type === 'NEW' ? 'bg-gray-900 text-white' : 'text-gray-400');
-            corrTab.className = 'flex-1 h-9 rounded-lg text-sm font-bold transition ' + (type === 'CORRECTION' ? 'bg-gray-900 text-white' : 'text-gray-400');
-        }
-
         function goToPreview() {
-            if (!selectedProduct) return;
-            document.getElementById('selectedProductName').textContent = selectedProduct.name;
-            document.getElementById('selectedProductMeta').textContent = selectedProduct.brand +
-                (selectedProduct.price ? ' · ' + Number(selectedProduct.price).toLocaleString('ko-KR') + '원' : '');
+            var name = document.getElementById('productName').value.trim();
+            if (!name) return;
+            document.getElementById('selectedProductName').textContent = name;
             document.getElementById('pointsStep1').classList.add('hidden');
             document.getElementById('pointsStep2').classList.remove('hidden');
         }
