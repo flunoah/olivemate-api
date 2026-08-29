@@ -31,6 +31,7 @@
 - [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요). 확장 시 CI 러너에 [Tailwind standalone CLI](https://github.com/tailwindlabs/tailwindcss/releases) 바이너리도 설치 필요(`processResources`가 `tailwindBuild`에 의존)
 - [ ] `[BE]` Web Push 알림 아이콘 파일(`/icons/icon-192.png`, `/icons/badge-72.png`) 부재 — `service-worker.js`가 참조하지만 실제 파일이 없음. mate-front 시절부터 있던 기존 결함으로, 최종 컷오버 시 `static/service-worker.js`로 그대로 포팅됨 (`docs/api-spec.md` "알려진 결함" 참고)
 - [ ] mate-front GitHub 레포 아카이브 — 최종 컷오버에서 Vercel 리다이렉트 배포까지는 완료. 레포 아카이브(`gh repo archive`)는 안정화 확인 후 사용자가 직접 진행하기로 함
+- [ ] `product_request` 테이블(`V5`) 드롭 검토 — 포인트 사용 시트를 자유 텍스트로 되돌리며 관련 애플리케이션 코드는 전부 제거했으나(아래 Done 참고), 테이블 자체는 파괴적 작업이라 남겨둠
 
 ## 📦 Backlog — 신규 기능
 
@@ -51,6 +52,7 @@
 
 ## ✅ Done
 
+- [x] 포인트 사용 시트 자유 입력으로 원복 + 상품 자동완성/등록요청 기능 제거 (2026-08-29) — 상품명 검색 자동완성이 검색 결과를 클릭해야만 다음 단계로 넘어갈 수 있어 불편하다는 피드백으로 되돌림. `dashboard.html` 포인트 사용 1단계를 `productName` 자유 텍스트 입력(브랜드 필드는 아예 없앰) + 항상 활성화된 "다음" 버튼으로 복원. `UsePointCommand`/`PointService`/`point_ledger.brand`는 원래 `goodsNo` 의존 없이 자유 텍스트였어서 백엔드 변경 없음(브랜드는 폼에서 안 보내면 자연히 null). 유일한 소비처를 잃은 `ProductSearchPageController`/`ProductSearchService`/`ProductSearchResult`/`fragments/product-search-results.html`과, 이 흐름에 종속돼 있던 "상품 등록·정정 요청" 기능(`ProductRequestPageController`/`AdminProductRequestPageController`/`application·domain·infrastructure/productrequest` 전체/`admin-product-requests.html`) 삭제. `product_request` 테이블(`V5`)은 드롭하지 않고 남김(위 Medium 참고). 엑셀 업로드 기반 상품 카탈로그 관리(`Product` 도메인/`ProductSyncService`/`AdminProductPageController`/`admin-products.html`)는 무관한 기능이라 그대로 유지
 - [x] **Myjaso A 전체화면 리디자인 S8~S18 전체 구현** — Claude Design 시안(`f885925`에서 이미 반영된 S1~S7 이후 나머지). 3개 신규 백엔드 기능 포함:
   - 포인트 사용 3단계 플로우(S8~S10): `PointService.previewUse()`가 `Point.use()`를 커밋 없이 인메모리로만 실행해 FIFO 차감 미리보기 제공(`POST /dashboard/points/preview`). 완료 화면은 기존 10초 되돌리기 카운트다운을 제거하고 "오늘 안에 내역에서 취소" 정적 안내로 교체
   - 상품 등록·정정 요청(S11) — `ProductRequest` 신규 도메인(`Product`와 동일 레이어 구조), 크루 제출(`POST /products/requests`) + 관리자 승인/반려(`admin-product-requests.html`). 승인 시 NEW는 `product`에 신규 행(가격 미상이면 0원), CORRECTION은 연결 상품 갱신. 마이그레이션 `V5`

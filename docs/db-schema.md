@@ -117,11 +117,11 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 | sale_price | BIGINT | |
 | synced_at | TIMESTAMP | 마지막 업로드 반영 시각 |
 
-인덱스: `idx_product_goods_no` UNIQUE, `idx_product_name` (자동완성 `LIKE` 검색용)
+인덱스: `idx_product_goods_no` UNIQUE, `idx_product_name` (`LIKE` 검색용)
 
-## product_request (`V5`)
+## product_request (`V5`, 미사용)
 
-크루가 상품 검색에서 찾지 못했거나(`NEW`) 매칭된 상품 정보가 틀렸을 때(`CORRECTION`) 보내는 등록·정정 요청. 관리자가 승인하면 `product` 테이블에 반영된다.
+크루가 상품 검색에서 찾지 못했거나(`NEW`) 매칭된 상품 정보가 틀렸을 때(`CORRECTION`) 보내는 등록·정정 요청. 관리자가 승인하면 `product` 테이블에 반영되는 구조였으나, 포인트 사용 시트를 자유 텍스트 입력으로 되돌리면서(2026-08-29) 관련 애플리케이션 코드를 전부 제거했다. **테이블은 드롭하지 않고 남겨둠** — 드롭 여부는 별도 승인 필요.
 
 | 컬럼 | 타입 | 비고 |
 |---|---|---|
