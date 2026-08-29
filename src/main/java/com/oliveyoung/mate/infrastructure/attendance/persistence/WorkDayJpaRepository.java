@@ -14,7 +14,6 @@ public interface WorkDayJpaRepository
         extends JpaRepository<WorkDayJpaEntity, UUID> {
 
     Optional<WorkDayJpaEntity> findByCrewIdAndWorkDate(UUID crewId, LocalDate workDate);
-    boolean existsByCrewIdAndWorkDate(UUID crewId, LocalDate workDate);
     boolean existsByCrewIdAndWorkDateAndSkippedTrue(UUID crewId, LocalDate workDate);
     List<WorkDayJpaEntity> findByCrewIdAndWorkDateBetween(UUID crewId, LocalDate from, LocalDate to);
     void deleteByCrewIdAndWorkDate(UUID crewId, LocalDate workDate);

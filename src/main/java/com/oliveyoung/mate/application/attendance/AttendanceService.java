@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,12 +23,18 @@ public class AttendanceService {
     @Transactional
     public void registerWorkDay(RegisterWorkDayCommand cmd) {
 
-        // 중복 등록 방지
-        if (workDayRepository.existsByCrewIdAndWorkDate(
-                cmd.crewId(), cmd.workDate())) {
-            throw new IllegalStateException(
-                "이미 등록된 근무일입니다. date=" + cmd.workDate()
-            );
+        // 기존 레코드가 있으면: 결근(취소)으로 남아있던 자리면 복원, 이미 정상 등록된 근무일이면 중복 거부
+        Optional<WorkDay> existing = workDayRepository.findByCrewIdAndWorkDate(cmd.crewId(), cmd.workDate());
+        if (existing.isPresent()) {
+            WorkDay workDay = existing.get();
+            if (!workDay.isSkipped()) {
+                throw new IllegalStateException(
+                    "이미 등록된 근무일입니다. date=" + cmd.workDate()
+                );
+            }
+            workDay.reinstate();
+            workDayRepository.save(workDay);
+            return;
         }
 
         // 근무일 등록 → 내부에서 WorkDayRegisteredEvent 발행

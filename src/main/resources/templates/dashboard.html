@@ -229,7 +229,7 @@
                 picker.focus();
                 picker.onchange = function () {
                     var date = picker.value;
-                    if (!date || extraState[date] || workState[date] !== undefined) { picker.value = ''; return; }
+                    if (!date || extraState[date] || workState[date] === 'REGISTERED') { picker.value = ''; return; }
                     extraState[date] = true;
                     var row = document.createElement('div');
                     row.className = 'extra-chip flex items-center justify-between rounded-xl border-2 border-dashed border-brand px-4 py-3';
@@ -286,8 +286,12 @@
         }
 
         function postWorkDay(url, date) {
+            var csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+            var csrfToken = document.querySelector('meta[name="_csrf"]').content;
             var body = new URLSearchParams({ workDate: date });
-            return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body });
+            var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            headers[csrfHeader] = csrfToken;
+            return fetch(url, { method: 'POST', headers: headers, body: body });
         }
 
         // ── S8~S10 포인트 사용 시트 ─────────────────
