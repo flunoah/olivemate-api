@@ -38,11 +38,6 @@ public class WorkDayRepositoryImpl implements WorkDayRepository {
     }
 
     @Override
-    public boolean existsByCrewIdAndWorkDate(UUID crewId, LocalDate workDate) {
-        return workDayJpaRepository.existsByCrewIdAndWorkDate(crewId, workDate);
-    }
-
-    @Override
     public List<WorkDay> findAllNotGranted(LocalDate before) {
         return workDayJpaRepository
             .findAllNotGranted(before)
