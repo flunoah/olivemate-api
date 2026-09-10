@@ -12,7 +12,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.csrf.CsrfException;
 
 @Configuration
 @EnableWebSecurity
@@ -43,9 +45,28 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
-            );
+            )
+            .exceptionHandling(handling -> handling.accessDeniedHandler(accessDeniedHandler()));
 
         return http.build();
+    }
+
+    /**
+     * 필터 단(컨트롤러 진입 전) 예외 처리 — GlobalExceptionHandler가 못 보는 영역.
+     * 세션 기반 CSRF라 세션 만료 시 토큰도 함께 무효화되므로 CSRF 실패는 "세션 만료"로 안내한다.
+     * 그 외(순수 권한 부족, 예: 크루가 /admin 진입)는 전용 안내 없이 역할 기반 홈으로 되돌린다.
+     * ponytail: 후자는 조용히 리다이렉트만 함, 안내 문구가 필요해지면 쿼리 파라미터 추가
+     */
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, ex) -> {
+            String location = (ex instanceof CsrfException) ? "/login?error=expired" : "/";
+            if ("true".equals(request.getHeader("HX-Request"))) {
+                response.setHeader("HX-Redirect", location);
+            } else {
+                response.sendRedirect(location);
+            }
+        };
     }
 
     /**

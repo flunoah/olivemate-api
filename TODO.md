@@ -15,6 +15,7 @@
 - [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
 - [x] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`) — Phase 6에서 `/history`가 Thymeleaf `HistoryPageController`로 이관되며 `?date=` 쿼리파라미터를 서버에서 직접 처리하게 되어 해결(Next.js `useSearchParams` 구현은 더 이상 불필요)
 - [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
+- [ ] `[FE]` htmx/raw-fetch 요청 실패 시 화면에 아무 표시 없음. `dashboard.html`의 `postWorkDay()`는 `response.ok` 체크 없이 `Promise.all().finally(reload)`라 에러를 통째로 삼키고, `hx-post`류는 4xx/5xx면 기본적으로 타겟 스왑을 안 해 사용자가 실패 자체를 모름
 - [ ] `[BE]` `notification`/`push_subscription` 테이블명 단수형 통일 검토
 - [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
 - [ ] `[FE]` `/admin` 페이지가 존재하지 않는 백엔드 엔드포인트를 호출 중 — `POST /api/v1/admin/points/grant`(포인트적립 탭), `DELETE /api/v1/admin/crews/{id}`(크루 삭제). signup 때 발견한 것과 같은 종류의 프론트/백엔드 경로 불일치로, 두 기능 모두 프로덕션에서 항상 실패해왔을 것으로 보임
