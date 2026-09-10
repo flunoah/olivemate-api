@@ -7,6 +7,10 @@
         <meta name="_csrf" th:content="${_csrf.token}"/>
         <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
         <link rel="stylesheet" th:href="@{/css/app.css}">
+        <link rel="manifest" th:href="@{/manifest.json}">
+        <link rel="icon" th:href="@{/icons/favicon-32.png}" sizes="32x32" type="image/png">
+        <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon-180.png}">
+        <meta name="theme-color" content="#2E9160">
         <script src="/js/htmx.min.js"></script>
         <script>
             document.addEventListener('htmx:configRequest', function (e) {
