@@ -149,3 +149,4 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 | V4 | `point_ledger.brand` 컬럼 추가 |
 | V5 | `product_request` 테이블 신설 |
 | V6 | `push_subscriptions`에 채널별 알림 토글 컬럼 3종 추가 |
+| V7 | `point_ledger.idx_ledger_crew_type_expired` 추가 — 엔티티 `@Table(indexes=...)`에는 있었으나 V1~V6에 누락되어 있던 인덱스. Flyway 미적용 + prod `ddl-auto=validate` 조합상 이 문서가 갱신되기 전까지 운영 DB에는 실제로 없었을 가능성이 높음 |
