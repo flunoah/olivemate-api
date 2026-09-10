@@ -16,4 +16,4 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
-      - run: ./gradlew compileJava --no-daemon
+      - run: ./gradlew build --no-daemon -x tailwindBuild -PciSkipContextTest

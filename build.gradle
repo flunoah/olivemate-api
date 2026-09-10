@@ -57,6 +57,10 @@ testAnnotationProcessor 'org.projectlombok:lombok'
 
 tasks.named('test') {
 useJUnitPlatform()
+// CI 러너에는 DB/JWT_SECRET/VAPID 키가 없어 컨텍스트 로딩 테스트만 제외 (-PciSkipContextTest)
+if (project.hasProperty('ciSkipContextTest')) {
+    exclude '**/MateApplicationTests.class'
+}
 }
 
 tasks.register('tailwindBuild', Exec) {
