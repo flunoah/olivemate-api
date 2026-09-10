@@ -27,6 +27,7 @@ import com.oliveyoung.mate.domain.point.vo.PointPolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,8 +88,7 @@ public class PointService {
         UUID   txId   = UUID.randomUUID();
 
         // 더블클릭·네트워크 재시도로 같은 idempotencyKey가 다시 오면 재차감 없이 이전 결과를 그대로 반환
-        if (cmd.idempotencyKey() != null
-                && !pointRepository.registerUseRequestIfAbsent(crewId, cmd.idempotencyKey(), txId)) {
+        if (cmd.idempotencyKey() != null && !registerUseRequestIfAbsent(crewId, cmd.idempotencyKey(), txId)) {
             UUID priorTxId = pointRepository.findTxIdByIdempotencyKey(crewId, cmd.idempotencyKey())
                 .orElseThrow(() -> new IllegalStateException("멱등성 키 조회에 실패했습니다."));
             return resultFromTxId(crewId, priorTxId);
@@ -411,5 +411,15 @@ public class PointService {
     // ── private helpers ────────────────────────────
     private void publishEvents(Point point) {
         point.pullDomainEvents().forEach(eventPublisher::publishEvent);
+    }
+
+    // 멱등 요청 등록 — 동일 idempotencyKey가 이미 등록돼 있으면(REQUIRES_NEW 트랜잭션에서 UNIQUE 위반)
+    // DataIntegrityViolationException이 던져지므로 false로 취급한다.
+    private boolean registerUseRequestIfAbsent(CrewId crewId, UUID idempotencyKey, UUID txId) {
+        try {
+            return pointRepository.registerUseRequestIfAbsent(crewId, idempotencyKey, txId);
+        } catch (DataIntegrityViolationException e) {
+            return false;
+        }
     }
 }

@@ -6,7 +6,6 @@ import com.oliveyoung.mate.domain.point.repository.PointRepository;
 import com.oliveyoung.mate.domain.point.vo.CrewId;
 import com.oliveyoung.mate.domain.point.vo.Money;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -114,20 +113,19 @@ public class PointRepositoryImpl implements PointRepository {
 
     // REQUIRES_NEW — UNIQUE 위반 시 Postgres가 트랜잭션 전체를 abort 상태로 만들기 때문에,
     // use()의 메인 트랜잭션과 분리된 커넥션에서 실패시켜야 이후 findByCrewId 등 후속 쿼리가 멀쩡하다.
+    // DataIntegrityViolationException을 여기서 잡아 삼키면, 이미 Postgres에 의해 abort된 이 REQUIRES_NEW
+    // 트랜잭션 자체를 Spring이 커밋하려다 UnexpectedRollbackException을 던진다(동일 idempotencyKey
+    // 재요청 시 100% 재현). 예외를 그대로 던져 정상적으로 롤백되게 하고, 호출자가 잡아서 처리한다.
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean registerUseRequestIfAbsent(CrewId crewId, UUID idempotencyKey, UUID txId) {
-        try {
-            useRequestJpaRepo.saveAndFlush(PointUseRequestJpaEntity.builder()
-                .id(UUID.randomUUID())
-                .crewId(crewId.id())
-                .idempotencyKey(idempotencyKey)
-                .txId(txId)
-                .build());
-            return true;
-        } catch (DataIntegrityViolationException e) {
-            return false;
-        }
+        useRequestJpaRepo.saveAndFlush(PointUseRequestJpaEntity.builder()
+            .id(UUID.randomUUID())
+            .crewId(crewId.id())
+            .idempotencyKey(idempotencyKey)
+            .txId(txId)
+            .build());
+        return true;
     }
 
     @Override

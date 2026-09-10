@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
@@ -69,7 +70,8 @@ class PointServiceIdempotencyTest {
 
         ArgumentCaptor<UUID> txIdCaptor = ArgumentCaptor.forClass(UUID.class);
         when(pointRepository.registerUseRequestIfAbsent(eq(crewId), eq(idempotencyKey), txIdCaptor.capture()))
-            .thenReturn(true, false);
+            .thenReturn(true)
+            .thenThrow(new DataIntegrityViolationException("duplicate idempotency key"));
 
         UsePointCommand cmd = new UsePointCommand(crewId.id(), 300, "desc", null, null, idempotencyKey);
 

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,7 +38,9 @@ class ScheduleServiceTest {
     private PointPolicyRepository  policyRepository;
     private ScheduleService        scheduleService;
 
-    private static final LocalDate TODAY = LocalDate.now();
+    // ScheduleService는 항상 Asia/Seoul 기준으로 "오늘"을 계산한다(CLAUDE.md 규칙) — 타임존 없는
+    // LocalDate.now()를 쓰면 UTC로 도는 CI 러너에서 KST 00~09시대에 날짜가 하루 어긋나 테스트가 깨진다.
+    private static final LocalDate TODAY = LocalDate.now(ZoneId.of("Asia/Seoul"));
     private static final int       TODAY_CODE = TODAY.getDayOfWeek().getValue() % 7; // Mon=1..Sat=6, Sun=0
     private static final int       OTHER_CODE = (TODAY_CODE + 1) % 7; // 오늘과 항상 다른 요일
 
