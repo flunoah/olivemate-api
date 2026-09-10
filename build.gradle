@@ -37,6 +37,9 @@ runtimeOnly 'com.beust:jcommander:1.81'
 implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 implementation 'org.apache.poi:poi-ooxml:5.2.5'
 
+implementation 'net.javacrumbs.shedlock:shedlock-spring:6.9.2'
+implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.9.2'
+
 compileOnly 'org.projectlombok:lombok'
 developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
@@ -49,6 +52,7 @@ annotationProcessor 'org.projectlombok:lombok'
 
 testImplementation 'org.springframework.boot:spring-boot-starter-test'
 testImplementation 'org.springframework.security:spring-security-test'
+testImplementation 'org.postgresql:postgresql'
 testCompileOnly 'org.projectlombok:lombok'
 testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 testAnnotationProcessor 'org.projectlombok:lombok'
@@ -57,6 +61,11 @@ testAnnotationProcessor 'org.projectlombok:lombok'
 
 tasks.named('test') {
 useJUnitPlatform()
+// CI 러너에는 DB/JWT_SECRET/VAPID 키가 없어 실 DB가 필요한 테스트만 제외 (-PciSkipContextTest)
+if (project.hasProperty('ciSkipContextTest')) {
+    exclude '**/MateApplicationTests.class'
+    exclude '**/ShedLockConfigTest.class'
+}
 }
 
 tasks.register('tailwindBuild', Exec) {

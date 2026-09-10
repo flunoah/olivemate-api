@@ -8,5 +8,6 @@ public record UsePointCommand(
     long      amount,
     String    description,
     LocalDate usedAt,
-    String    brand
+    String    brand,
+    UUID      idempotencyKey
 ) {}

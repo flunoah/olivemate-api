@@ -14,7 +14,8 @@
 - [ ] `[BE]` S18 알림 설정 시트가 현재 구독의 채널별 on/off 상태를 조회하는 API가 없어, 시트를 열 때마다 체크박스가 항상 전부 켜진 상태로 보임(저장은 정상 동작). `GET /push/subscribe/channels` 추가하면 해결
 - [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
 - [x] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`) — Phase 6에서 `/history`가 Thymeleaf `HistoryPageController`로 이관되며 `?date=` 쿼리파라미터를 서버에서 직접 처리하게 되어 해결(Next.js `useSearchParams` 구현은 더 이상 불필요)
-- [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
+- [ ] `[BE]` `Point.use()` — 만료 배치(`expireOld`)가 아직 안 돈 상태에서 만료 시각이 지난 원장만 남아있으면, FIFO 대상 필터(`!isExpired`)에서 전부 제외돼 실제로는 아무 원장도 차감되지 않는데 `balance`는 무조건 차감되고 `PointUsedEvent`도 발행됨. USE 원장이 안 생겨 거래 내역과 잔액이 어긋남. `PointTest.use_against_already_expired_ledger_does_not_deduct_but_still_reduces_balance`로 재현 확인
+- [ ] `[BE]` `Point.cancelUse()` — 동일 `txId`로 두 번 취소하면 복원할 EARN 원장(`amount>remaining`)이 이미 없어 실제 원장 복원은 0건인데 `balance`는 `totalToRestore`만큼 또 증가함. 중복 취소를 막는 가드가 없음. `PointTest.cancel_use_twice_with_same_tx_id_inflates_balance_without_restoring_ledgers`로 재현 확인
 - [ ] `[FE]` htmx/raw-fetch 요청 실패 시 화면에 아무 표시 없음. `dashboard.html`의 `postWorkDay()`는 `response.ok` 체크 없이 `Promise.all().finally(reload)`라 에러를 통째로 삼키고, `hx-post`류는 4xx/5xx면 기본적으로 타겟 스왑을 안 해 사용자가 실패 자체를 모름
 - [ ] `[BE]` `notification`/`push_subscription` 테이블명 단수형 통일 검토
 - [ ] `[FE]` `next.config.ts` 백엔드 주소를 `API_BASE_URL` 환경변수로 분리
@@ -22,14 +23,17 @@
 
 ## 🟢 Low
 
-- [ ] `[BE]` FIFO 로직 단위 테스트 (`Point.use()`, `cancelUse()`, `expireOld()`)
-- [ ] `[BE]` `PointService.cancelUse()`의 당일 판정(`useLedger.getCreatedAt().toLocalDate().equals(LocalDate.now())`)이 시스템 기본 zone 사용 중 — `Asia/Seoul` 미적용. 자정 근처 KST 사용 건에서 취소 가능 여부가 어긋날 수 있음
+- [ ] `[BE]` Flyway 정식 도입 — 현재 `db/migration/*.sql`은 자동 실행되지 않고 운영 DB에 수동 `psql` 실행으로만 반영됨. prod 스키마 baseline 정합성 확인이 먼저 필요해 리스크가 커 별도 세션 권장
+- [ ] `[BE]` Spring Boot Actuator 추가 — 헬스체크/메트릭 관측성 확보
+- [ ] `[BE]` 레거시 제거 검토 — `jjwt-api`/`jjwt-impl`/`jjwt-jackson` 의존성, `JWT_SECRET`/`JWT_EXPIRE_MS` 환경변수(Phase 7 컷오버로 JWT 인증 자체가 삭제돼 더 이상 사용되지 않음), `product_request` 테이블(`V5`) 드롭 여부(위 항목과 중복, 통합 검토)
+- [ ] `[BE]` Admin key 상수 시간 비교 — `X-Admin-Key` 검증이 `String.equals`라 타이밍 공격 이론상 가능. `MessageDigest.isEqual`로 교체 권장(1줄). **별도로, `ADMIN_SECRET_KEY`가 Render 운영 환경변수에 실제로 설정돼 있는지 직접 콘솔에서 확인 필요** — 코드로는 확인 불가하며, README 기본값(`mate-admin-secret-key`)이 그대로 살아있으면 실제 보안 구멍
+- [ ] `[BE]` 성능 실측 — k6 등으로 FIFO 차감/야간 배치 부하 테스트 후 `docs/performance.md` 작성
+- [ ] README에 설계 문서(`docs/architecture.md` 등) 링크 추가, `point_ledger` 상태 전이도(EARN/INIT → USE/EXPIRE) 다이어그램 작성
 - [ ] `[FE]` 공통 컴포넌트 추출 (`Toast`, `Card`, `Button`)
 - [ ] `[FE]` 컬러 토큰 상수화
 - [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
 - [ ] `[BE]` 응답 포맷 통일 (`ApiResponse` 래핑 여부)
 - [ ] `[FE]` ESLint 도입 (`lint` 스크립트 부재)
-- [ ] CI 파이프라인 확장 — `./gradlew build`(테스트 포함, 시크릿 주입 필요). 확장 시 CI 러너에 [Tailwind standalone CLI](https://github.com/tailwindlabs/tailwindcss/releases) 바이너리도 설치 필요(`processResources`가 `tailwindBuild`에 의존)
 - [ ] `[BE]` Web Push 알림 아이콘 파일(`/icons/icon-192.png`, `/icons/badge-72.png`) 부재 — `service-worker.js`가 참조하지만 실제 파일이 없음. mate-front 시절부터 있던 기존 결함으로, 최종 컷오버 시 `static/service-worker.js`로 그대로 포팅됨 (`docs/api-spec.md` "알려진 결함" 참고)
 - [ ] mate-front GitHub 레포 아카이브 — 최종 컷오버에서 Vercel 리다이렉트 배포까지는 완료. 레포 아카이브(`gh repo archive`)는 안정화 확인 후 사용자가 직접 진행하기로 함
 - [ ] `product_request` 테이블(`V5`) 드롭 검토 — 포인트 사용 시트를 자유 텍스트로 되돌리며 관련 애플리케이션 코드는 전부 제거했으나(아래 Done 참고), 테이블 자체는 파괴적 작업이라 남겨둠
@@ -53,6 +57,14 @@
 
 ## ✅ Done
 
+- [x] `[BE]` ShedLock 배치 분산락 (2026-09-10) — 롤링 배포 중 신/구 인스턴스가 짧게 겹치는 순간 같은 `@Scheduled` 크론(`PointGrantScheduler`/`PointExpiryScheduler`/`PointExpiryReminderScheduler`)이 동시에 돌아 전 크루 포인트가 이중 지급되는 것을 방지. `shedlock` 테이블 신설(`V9`, 공식 권장 DDL), `ShedLockConfig`(`@EnableSchedulerLock` + `JdbcTemplateLockProvider`, 기존 Postgres 재사용·신규 인프라 없음), 세 스케줄러에 `@SchedulerLock` 부여. `ShedLockConfigTest`(실 Postgres로 두 스레드 동시 락 시도 → 하나만 실행됨)로 검증 — DB 필요해 CI에서는 `-PciSkipContextTest`로 제외
+  - **2026-09-10 후속(배포 순서 리스크 수정)**: `shedlock`은 JPA 엔티티가 아니라 `ddl-auto=validate`로 V9 미실행이 안 걸러짐 — 락 획득 실패를 shedlock 라이브러리가 "락 못 잡음"과 동일하게 처리해 세 스케줄러 본문이 텔레그램 알림 없이 조용히 스킵되는 구조였음. `ShedLockConfig.lockProvider`에서 빈 생성 시 `SELECT 1 FROM shedlock WHERE 1=0`으로 존재 확인 → V9 미실행 시 기동 자체가 실패하도록 변경(기존 `ddl-auto=validate`와 동일한 fail-fast)
+- [x] `[BE]` 포인트 사용(`use()`) 요청 멱등성 키 (2026-09-10) — 더블클릭/네트워크 재시도로 두 개의 독립된 `use()` 요청이 겹치지 않는 타이밍에 도착하면 낙관적 락으로도 못 막던 실제 중복 차감 시나리오 방어. `point_use_request(crew_id, idempotency_key, tx_id)` 테이블 신설(`V8`, `UNIQUE(crew_id, idempotency_key)`), 대시보드 포인트 사용 폼에 렌더링 시점 UUID hidden input 추가, `PointService.use()`가 FIFO 차감 전에 먼저 등록을 시도해 중복이면 재차감 없이 기존 `tx_id`의 결과를 그대로 반환. `PointServiceIdempotencyTest`로 검증
+  - **2026-09-10 후속(트랜잭션 오염 버그 수정)**: `registerUseRequestIfAbsent`가 UNIQUE 위반(`DataIntegrityViolationException`)을 캐치해도, PostgreSQL은 그 시점에 이미 현재 트랜잭션 전체를 abort 상태로 만들어버려 바로 다음 줄 `findTxIdByIdempotencyKey` 조회가 "current transaction is aborted"로 죽고 500 + 텔레그램 알림으로 튀는 문제 발견(전부 mock 기반인 `PointServiceIdempotencyTest`는 이 시나리오를 검증 못 함). `registerUseRequestIfAbsent`에 `@Transactional(propagation = REQUIRES_NEW)` 추가해 UNIQUE 위반의 abort가 `use()` 메인 트랜잭션과 분리된 별도 커넥션에 갇히도록 수정
+- [x] `[BE]` `OptimisticLockingFailureException` 전용 핸들러 (2026-09-10) — `GlobalExceptionHandler`에 `@ExceptionHandler(ObjectOptimisticLockingFailureException.class)` 추가, 409 `CONCURRENT_MODIFICATION` + "다시 시도해주세요"로 응답. 기존 catch-all(500)과 분리해 텔레그램 오알림 방지
+- [x] `[BE]` `PointService.cancelUse()`/`expirePoints()`, `AttendanceService.getThisWeekWorkDays()`의 타임존 버그 수정 (2026-09-10) — 시스템 기본 zone `LocalDate.now()`/`LocalDateTime.now()`를 `ZoneId.of("Asia/Seoul")` 명시로 교체. 같은 파일 내 다른 메서드에 이미 있던 패턴 재사용
+- [x] `[BE]` FIFO 로직 단위 테스트 (2026-09-10) — 신규 `PointTest.java`(순수 도메인, DB 의존 없음). 다중 원장 FIFO 차감, 만료일 동일 시 순서, 만료일 null 취급, 잔액 부족, cancelUse 분산 복원, 미매칭/중복 취소 등 8개 케이스. 작성 중 발견한 버그 2건은 위 Medium 섹션에 별도 기록
+- [x] CI 파이프라인 확장 (2026-09-10) — `./gradlew compileJava` → `./gradlew build -x tailwindBuild -PciSkipContextTest`. `MateApplicationTests`(유일한 `@SpringBootTest`)만 CI에서 제외(DB/JWT_SECRET/VAPID 키 없음), 나머지 테스트는 전부 CI에서 실행. 로컬 `./gradlew build`는 `ciSkipContextTest` 프로퍼티가 없어 기존처럼 컨텍스트 로딩까지 전부 실행됨
 - [x] 포인트 사용 시트 자유 입력으로 원복 + 상품 자동완성/등록요청 기능 제거 (2026-08-29) — 상품명 검색 자동완성이 검색 결과를 클릭해야만 다음 단계로 넘어갈 수 있어 불편하다는 피드백으로 되돌림. `dashboard.html` 포인트 사용 1단계를 `productName` 자유 텍스트 입력(브랜드 필드는 아예 없앰) + 항상 활성화된 "다음" 버튼으로 복원. `UsePointCommand`/`PointService`/`point_ledger.brand`는 원래 `goodsNo` 의존 없이 자유 텍스트였어서 백엔드 변경 없음(브랜드는 폼에서 안 보내면 자연히 null). 유일한 소비처를 잃은 `ProductSearchPageController`/`ProductSearchService`/`ProductSearchResult`/`fragments/product-search-results.html`과, 이 흐름에 종속돼 있던 "상품 등록·정정 요청" 기능(`ProductRequestPageController`/`AdminProductRequestPageController`/`application·domain·infrastructure/productrequest` 전체/`admin-product-requests.html`) 삭제. `product_request` 테이블(`V5`)은 드롭하지 않고 남김(위 Medium 참고). 엑셀 업로드 기반 상품 카탈로그 관리(`Product` 도메인/`ProductSyncService`/`AdminProductPageController`/`admin-products.html`)는 무관한 기능이라 그대로 유지
 - [x] **Myjaso A 전체화면 리디자인 S8~S18 전체 구현** — Claude Design 시안(`f885925`에서 이미 반영된 S1~S7 이후 나머지). 3개 신규 백엔드 기능 포함:
   - 포인트 사용 3단계 플로우(S8~S10): `PointService.previewUse()`가 `Point.use()`를 커밋 없이 인메모리로만 실행해 FIFO 차감 미리보기 제공(`POST /dashboard/points/preview`). 완료 화면은 기존 10초 되돌리기 카운트다운을 제거하고 "오늘 안에 내역에서 취소" 정적 안내로 교체

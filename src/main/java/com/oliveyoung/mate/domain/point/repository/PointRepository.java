@@ -29,5 +29,9 @@ public interface PointRepository {
     // 만료 예정 알림 배치용 — 크루별 만료 예정 합계 일괄 조회
     List<ExpiringReminder> findExpiringAmountsBetween(LocalDateTime from, LocalDateTime to);
 
+    // use() 요청 멱등성 — (crewId, idempotencyKey) 최초 요청이면 true(등록 성공), 중복이면 false
+    boolean registerUseRequestIfAbsent(CrewId crewId, UUID idempotencyKey, UUID txId);
+    Optional<UUID> findTxIdByIdempotencyKey(CrewId crewId, UUID idempotencyKey);
+
     record ExpiringReminder(CrewId crewId, Money amount) {}
 }

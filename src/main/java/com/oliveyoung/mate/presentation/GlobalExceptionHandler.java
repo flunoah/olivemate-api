@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -79,6 +80,14 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity violation: {}", e.getMessage());
         return ResponseEntity.status(409)
             .body(new ErrorResponse("CONFLICT", "이미 처리된 요청입니다."));
+    }
+
+    // 409 — 동시 수정 충돌 (같은 point_account.version을 동시에 갱신 시도). 정상적인 동시 클릭 상황이라 슬랙 알림은 보내지 않음
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(ObjectOptimisticLockingFailureException e) {
+        log.warn("Optimistic locking conflict: {}", e.getMessage());
+        return ResponseEntity.status(409)
+            .body(new ErrorResponse("CONCURRENT_MODIFICATION", "다시 시도해주세요."));
     }
 
     // 500 — 텔레그램 알림 추가

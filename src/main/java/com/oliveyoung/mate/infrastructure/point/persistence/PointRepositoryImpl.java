@@ -6,7 +6,10 @@ import com.oliveyoung.mate.domain.point.repository.PointRepository;
 import com.oliveyoung.mate.domain.point.vo.CrewId;
 import com.oliveyoung.mate.domain.point.vo.Money;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +21,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PointRepositoryImpl implements PointRepository {
 
-    private final PointAccountJpaRepository accountJpaRepo;
-    private final PointLedgerJpaRepository  ledgerJpaRepo;
-    private final PointMapper               mapper;
+    private final PointAccountJpaRepository    accountJpaRepo;
+    private final PointLedgerJpaRepository     ledgerJpaRepo;
+    private final PointUseRequestJpaRepository useRequestJpaRepo;
+    private final PointMapper                  mapper;
 
     @Override
     public Optional<Point> findByCrewId(CrewId crewId) {
@@ -106,5 +110,29 @@ public class PointRepositoryImpl implements PointRepository {
     @Override
     public void deleteLedgersByTxId(UUID txId) {
         ledgerJpaRepo.deleteByTxId(txId);
+    }
+
+    // REQUIRES_NEW — UNIQUE 위반 시 Postgres가 트랜잭션 전체를 abort 상태로 만들기 때문에,
+    // use()의 메인 트랜잭션과 분리된 커넥션에서 실패시켜야 이후 findByCrewId 등 후속 쿼리가 멀쩡하다.
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean registerUseRequestIfAbsent(CrewId crewId, UUID idempotencyKey, UUID txId) {
+        try {
+            useRequestJpaRepo.saveAndFlush(PointUseRequestJpaEntity.builder()
+                .id(UUID.randomUUID())
+                .crewId(crewId.id())
+                .idempotencyKey(idempotencyKey)
+                .txId(txId)
+                .build());
+            return true;
+        } catch (DataIntegrityViolationException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public Optional<UUID> findTxIdByIdempotencyKey(CrewId crewId, UUID idempotencyKey) {
+        return useRequestJpaRepo.findByCrewIdAndIdempotencyKey(crewId.id(), idempotencyKey)
+            .map(PointUseRequestJpaEntity::getTxId);
     }
 }

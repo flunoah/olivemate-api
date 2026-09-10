@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -78,7 +79,7 @@ public class AttendanceService {
     // ── 이번 주 근무일 조회 ────────────────────────
     @Transactional(readOnly = true)
     public List<WorkDayStatus> getThisWeekWorkDays(UUID crewId) {
-        LocalDate monday = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDate monday = LocalDate.now(ZoneId.of("Asia/Seoul")).with(DayOfWeek.MONDAY);
         LocalDate sunday = monday.plusDays(6);
         return workDayRepository.findByCrewIdAndWorkDateBetween(crewId, monday, sunday)
             .stream()

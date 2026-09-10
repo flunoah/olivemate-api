@@ -18,4 +18,5 @@
 | IllegalStateException | 409 | CONFLICT |
 | DataIntegrityViolationException | 409 | CONFLICT |
 | AccessDeniedException | 403 | ACCESS_DENIED |
-| InsufficientPointException | 422 | INSUFFICIENT_POINT |ㅎ
+| InsufficientPointException | 422 | INSUFFICIENT_POINT |
+| ObjectOptimisticLockingFailureException | 409 | CONCURRENT_MODIFICATION |
