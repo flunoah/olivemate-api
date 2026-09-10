@@ -51,6 +51,8 @@
 
 ## ✅ Done
 
+- [x] `[BE]` 포인트 사용(`use()`) 요청 멱등성 키 (2026-09-10) — 더블클릭/네트워크 재시도로 두 개의 독립된 `use()` 요청이 겹치지 않는 타이밍에 도착하면 낙관적 락으로도 못 막던 실제 중복 차감 시나리오 방어. `point_use_request(crew_id, idempotency_key, tx_id)` 테이블 신설(`V8`, `UNIQUE(crew_id, idempotency_key)`), 대시보드 포인트 사용 폼에 렌더링 시점 UUID hidden input 추가, `PointService.use()`가 FIFO 차감 전에 먼저 등록을 시도해 중복이면 재차감 없이 기존 `tx_id`의 결과를 그대로 반환. `PointServiceIdempotencyTest`로 검증
+  - **2026-09-10 후속(트랜잭션 오염 버그 수정)**: `registerUseRequestIfAbsent`가 UNIQUE 위반(`DataIntegrityViolationException`)을 캐치해도, PostgreSQL은 그 시점에 이미 현재 트랜잭션 전체를 abort 상태로 만들어버려 바로 다음 줄 `findTxIdByIdempotencyKey` 조회가 "current transaction is aborted"로 죽고 500 + 텔레그램 알림으로 튀는 문제 발견(전부 mock 기반인 `PointServiceIdempotencyTest`는 이 시나리오를 검증 못 함). `registerUseRequestIfAbsent`에 `@Transactional(propagation = REQUIRES_NEW)` 추가해 UNIQUE 위반의 abort가 `use()` 메인 트랜잭션과 분리된 별도 커넥션에 갇히도록 수정
 - [x] `[BE]` `OptimisticLockingFailureException` 전용 핸들러 (2026-09-10) — `GlobalExceptionHandler`에 `@ExceptionHandler(ObjectOptimisticLockingFailureException.class)` 추가, 409 `CONCURRENT_MODIFICATION` + "다시 시도해주세요"로 응답. 기존 catch-all(500)과 분리해 텔레그램 오알림 방지
 - [x] `[BE]` `PointService.cancelUse()`/`expirePoints()`, `AttendanceService.getThisWeekWorkDays()`의 타임존 버그 수정 (2026-09-10) — 시스템 기본 zone `LocalDate.now()`/`LocalDateTime.now()`를 `ZoneId.of("Asia/Seoul")` 명시로 교체. 같은 파일 내 다른 메서드에 이미 있던 패턴 재사용
 - [x] `[BE]` FIFO 로직 단위 테스트 (2026-09-10) — 신규 `PointTest.java`(순수 도메인, DB 의존 없음). 다중 원장 FIFO 차감, 만료일 동일 시 순서, 만료일 null 취급, 잔액 부족, cancelUse 분산 복원, 미매칭/중복 취소 등 8개 케이스. 작성 중 발견한 버그 2건은 위 Medium 섹션에 별도 기록

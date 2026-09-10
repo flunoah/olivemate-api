@@ -84,11 +84,19 @@ public class PointService {
     @Transactional
     public UsePointResult use(UsePointCommand cmd) {
         CrewId crewId = CrewId.of(cmd.crewId());
+        UUID   txId   = UUID.randomUUID();
+
+        // 더블클릭·네트워크 재시도로 같은 idempotencyKey가 다시 오면 재차감 없이 이전 결과를 그대로 반환
+        if (cmd.idempotencyKey() != null
+                && !pointRepository.registerUseRequestIfAbsent(crewId, cmd.idempotencyKey(), txId)) {
+            UUID priorTxId = pointRepository.findTxIdByIdempotencyKey(crewId, cmd.idempotencyKey())
+                .orElseThrow(() -> new IllegalStateException("멱등성 키 조회에 실패했습니다."));
+            return resultFromTxId(crewId, priorTxId);
+        }
 
         Point point = pointRepository.findByCrewId(crewId)
             .orElseThrow(() -> new PointAccountNotFoundException(crewId));
 
-        UUID txId = UUID.randomUUID();
         Money requestAmount = Money.of(cmd.amount());
 
         LocalDateTime usedAt = cmd.usedAt() != null
@@ -110,6 +118,24 @@ public class PointService {
             point.getBalance().amount(),
             usedLedgerId
         );
+    }
+
+    // ── 멱등 재요청 시 기존 USE 결과 재구성 (재차감 없음) ──
+    private UsePointResult resultFromTxId(CrewId crewId, UUID txId) {
+        Point point = pointRepository.findByCrewId(crewId)
+            .orElseThrow(() -> new PointAccountNotFoundException(crewId));
+
+        List<PointLedger> useLedgers = point.getLedgers().stream()
+            .filter(l -> l.getType() == PointLedger.LedgerType.USE && txId.equals(l.getTxId()))
+            .toList();
+        if (useLedgers.isEmpty()) {
+            throw new IllegalStateException("멱등 처리된 사용 내역을 찾을 수 없습니다.");
+        }
+
+        long usedAmount = useLedgers.stream().mapToLong(l -> l.getAmount().amount()).sum();
+        UUID usedLedgerId = useLedgers.get(0).getLedgerId();
+
+        return new UsePointResult(usedAmount, point.getBalance().amount(), usedLedgerId);
     }
 
     // ── 잔액 조회 ──────────────────────────────────

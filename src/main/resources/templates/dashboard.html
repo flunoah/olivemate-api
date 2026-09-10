@@ -114,6 +114,7 @@
         <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto">
             <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
             <form th:action="@{/dashboard/points/use}" method="post">
+                <input type="hidden" name="idempotencyKey" th:value="${T(java.util.UUID).randomUUID()}"/>
                 <div id="pointsStep1">
                     <div class="flex items-center justify-between mb-3">
                         <button type="button" onclick="closeSheet('pointsSheet')" class="text-gray-400 text-xl leading-none">&times;</button>

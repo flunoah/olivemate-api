@@ -72,6 +72,20 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 
 인덱스: `idx_ledger_crew_type_expired (crew_id, ledger_type, expired_at)`, `idx_ledger_crew_granted (crew_id, granted_at)`, `idx_ledger_tx (tx_id)`
 
+## point_use_request (`V8`)
+
+`use()` 요청 멱등성 키 저장. 더블클릭/네트워크 재시도로 같은 `idempotency_key`가 다시 오면 `UNIQUE(crew_id, idempotency_key)` 위반으로 감지해 FIFO 재차감 없이 기존 `tx_id`의 결과를 그대로 반환한다.
+
+| 컬럼 | 타입 | 비고 |
+|---|---|---|
+| id | UUID PK | |
+| crew_id | UUID | |
+| idempotency_key | UUID | 렌더링 시점에 생성돼 폼 hidden input으로 전송됨 |
+| tx_id | UUID | 실제 FIFO 차감을 수행한 `point_ledger.tx_id` |
+| created_at | TIMESTAMP | |
+
+제약: `uq_use_request_crew_idempotency (crew_id, idempotency_key)` UNIQUE
+
 ## notifications
 
 | 컬럼 | 타입 | 비고 |
@@ -150,3 +164,4 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 | V5 | `product_request` 테이블 신설 |
 | V6 | `push_subscriptions`에 채널별 알림 토글 컬럼 3종 추가 |
 | V7 | `point_ledger.idx_ledger_crew_type_expired` 추가 — 엔티티 `@Table(indexes=...)`에는 있었으나 V1~V6에 누락되어 있던 인덱스. Flyway 미적용 + prod `ddl-auto=validate` 조합상 이 문서가 갱신되기 전까지 운영 DB에는 실제로 없었을 가능성이 높음 |
+| V8 | `point_use_request` 테이블 신설 — `use()` 요청 멱등성 키 저장 |
