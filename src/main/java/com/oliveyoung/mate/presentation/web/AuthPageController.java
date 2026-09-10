@@ -15,7 +15,10 @@ public class AuthPageController {
             @RequestParam(required = false) String registered,
             Model model) {
         if (error != null) {
-            model.addAttribute("error", "아이디 또는 비밀번호를 확인해주세요");
+            String message = "expired".equals(error)
+                ? "세션이 만료되었습니다. 다시 로그인해주세요"
+                : "아이디 또는 비밀번호를 확인해주세요";
+            model.addAttribute("error", message);
         }
         if (logout != null) {
             model.addAttribute("message", "로그아웃되었습니다.");

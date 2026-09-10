@@ -9,6 +9,7 @@
 - 크루 ID: `CrewId.of(SecurityUtils.authenticatedCrewId())`
 - 권한: `SecurityUtils.validateAdmin()` / `validateSelfOrAdmin(crewId)`
 - 관리자 API는 `X-Admin-Key` 헤더 요구
+- 필터 단(CSRF 실패, 컨트롤러 진입 전 권한 부족)은 `GlobalExceptionHandler`가 못 보는 영역 — `SecurityConfig`의 `accessDeniedHandler`가 처리. 세션 기반 CSRF라 세션 만료 시 토큰도 무효화되므로 CSRF 실패는 `/login?error=expired`로 안내
 
 ## 에러 코드 매핑
 | 예외 | 상태 | code |
