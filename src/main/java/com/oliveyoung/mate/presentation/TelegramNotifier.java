@@ -3,6 +3,7 @@ package com.oliveyoung.mate.presentation;
 import com.oliveyoung.mate.application.JobReport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -133,10 +134,11 @@ public class TelegramNotifier {
             ));
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 "https://api.anthropic.com/v1/messages",
+                HttpMethod.POST,
                 request,
-                Map.class
+                new ParameterizedTypeReference<Map<String, Object>>() {}
             );
 
             Map<String, Object> responseBody = response.getBody();
