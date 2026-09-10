@@ -29,6 +29,18 @@
             </div>
         </div>
 
+        <!-- 크루 초대 -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+            <button type="button" onclick="openInviteSheet()"
+                    class="w-full flex items-center justify-between px-5 py-4 text-left">
+                <span>
+                    <span class="block text-sm font-bold">QR로 크루 초대하기</span>
+                    <span class="block text-xs text-gray-400 mt-0.5">가입 링크를 QR 코드로 공유해요</span>
+                </span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-300 flex-none"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+
         <!-- 근무 조건 -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
             <p class="px-5 pt-4 pb-2 text-xs font-bold text-gray-400">근무 조건</p>
@@ -94,9 +106,57 @@
 
     <div th:replace="~{fragments/notification-settings-sheet :: sheet}"></div>
 
+    <!-- 크루 초대 QR 바텀시트 -->
+    <div id="inviteSheet" class="hidden fixed inset-0 z-60">
+        <div class="absolute inset-0 bg-black/40" onclick="closeSheet('inviteSheet')"></div>
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-2xl p-5">
+            <div class="w-11 h-1 rounded-full bg-gray-200 mx-auto mb-4"></div>
+            <div class="text-lg font-extrabold mb-1 text-center">크루 초대하기</div>
+            <p class="text-xs text-gray-400 mb-4 text-center leading-relaxed">QR을 스캔하거나 링크를 공유해서 초대해요</p>
+            <div id="inviteQr" class="flex justify-center mb-4"></div>
+            <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 mb-3">
+                <span id="inviteUrlText" class="flex-1 text-xs text-gray-500 truncate"></span>
+                <button type="button" id="copyInviteBtn" onclick="copyInviteUrl()"
+                        class="flex-none text-xs font-bold text-brand-strong">복사</button>
+            </div>
+            <button type="button" onclick="closeSheet('inviteSheet')"
+                    class="w-full h-13 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition">닫기</button>
+        </div>
+    </div>
+
+    <script src="/js/qrcode.min.js"></script>
     <script>
         function openSheet(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeSheet(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function openInviteSheet() {
+            var url = window.location.origin + '/signup';
+            document.getElementById('inviteUrlText').textContent = url;
+            var qrEl = document.getElementById('inviteQr');
+            qrEl.innerHTML = '';
+            try {
+                new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+            } catch (e) {
+                qrEl.textContent = 'QR 생성에 실패했어요. 아래 링크를 복사해서 공유해주세요.';
+            }
+            openSheet('inviteSheet');
+        }
+
+        function copyInviteUrl() {
+            var url = document.getElementById('inviteUrlText').textContent;
+            if (!navigator.clipboard) {
+                window.prompt('아래 링크를 직접 복사해주세요', url);
+                return;
+            }
+            navigator.clipboard.writeText(url).then(function () {
+                var btn = document.getElementById('copyInviteBtn');
+                var original = btn.textContent;
+                btn.textContent = '복사됨';
+                setTimeout(function () { btn.textContent = original; }, 1500);
+            }, function () {
+                window.prompt('복사에 실패했어요. 아래 링크를 직접 복사해주세요', url);
+            });
+        }
 
         function nextMondayIso() {
             var d = new Date();
