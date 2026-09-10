@@ -189,7 +189,7 @@ public class PointService {
         Point point = pointRepository.findByCrewId(CrewId.of(crewId))
             .orElseThrow(() -> new PointAccountNotFoundException(CrewId.of(crewId)));
 
-        point.expireOld(LocalDateTime.now());
+        point.expireOld(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
 
         pointRepository.save(point);
         publishEvents(point);
@@ -222,7 +222,7 @@ public class PointService {
         if (!useLedger.getCrewId().equals(crewId)) {
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
-        if (!useLedger.getCreatedAt().toLocalDate().equals(LocalDate.now())) {
+        if (!useLedger.getCreatedAt().toLocalDate().equals(LocalDate.now(ZoneId.of("Asia/Seoul")))) {
             throw new IllegalStateException("당일 사용 건만 취소 가능합니다.");
         }
 

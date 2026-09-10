@@ -23,7 +23,6 @@
 ## 🟢 Low
 
 - [ ] `[BE]` FIFO 로직 단위 테스트 (`Point.use()`, `cancelUse()`, `expireOld()`)
-- [ ] `[BE]` `PointService.cancelUse()`의 당일 판정(`useLedger.getCreatedAt().toLocalDate().equals(LocalDate.now())`)이 시스템 기본 zone 사용 중 — `Asia/Seoul` 미적용. 자정 근처 KST 사용 건에서 취소 가능 여부가 어긋날 수 있음
 - [ ] `[FE]` 공통 컴포넌트 추출 (`Toast`, `Card`, `Button`)
 - [ ] `[FE]` 컬러 토큰 상수화
 - [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
@@ -53,6 +52,7 @@
 
 ## ✅ Done
 
+- [x] `[BE]` `PointService.cancelUse()`/`expirePoints()`, `AttendanceService.getThisWeekWorkDays()`의 타임존 버그 수정 (2026-09-10) — 시스템 기본 zone `LocalDate.now()`/`LocalDateTime.now()`를 `ZoneId.of("Asia/Seoul")` 명시로 교체. 같은 파일 내 다른 메서드에 이미 있던 패턴 재사용
 - [x] 포인트 사용 시트 자유 입력으로 원복 + 상품 자동완성/등록요청 기능 제거 (2026-08-29) — 상품명 검색 자동완성이 검색 결과를 클릭해야만 다음 단계로 넘어갈 수 있어 불편하다는 피드백으로 되돌림. `dashboard.html` 포인트 사용 1단계를 `productName` 자유 텍스트 입력(브랜드 필드는 아예 없앰) + 항상 활성화된 "다음" 버튼으로 복원. `UsePointCommand`/`PointService`/`point_ledger.brand`는 원래 `goodsNo` 의존 없이 자유 텍스트였어서 백엔드 변경 없음(브랜드는 폼에서 안 보내면 자연히 null). 유일한 소비처를 잃은 `ProductSearchPageController`/`ProductSearchService`/`ProductSearchResult`/`fragments/product-search-results.html`과, 이 흐름에 종속돼 있던 "상품 등록·정정 요청" 기능(`ProductRequestPageController`/`AdminProductRequestPageController`/`application·domain·infrastructure/productrequest` 전체/`admin-product-requests.html`) 삭제. `product_request` 테이블(`V5`)은 드롭하지 않고 남김(위 Medium 참고). 엑셀 업로드 기반 상품 카탈로그 관리(`Product` 도메인/`ProductSyncService`/`AdminProductPageController`/`admin-products.html`)는 무관한 기능이라 그대로 유지
 - [x] **Myjaso A 전체화면 리디자인 S8~S18 전체 구현** — Claude Design 시안(`f885925`에서 이미 반영된 S1~S7 이후 나머지). 3개 신규 백엔드 기능 포함:
   - 포인트 사용 3단계 플로우(S8~S10): `PointService.previewUse()`가 `Point.use()`를 커밋 없이 인메모리로만 실행해 FIFO 차감 미리보기 제공(`POST /dashboard/points/preview`). 완료 화면은 기존 10초 되돌리기 카운트다운을 제거하고 "오늘 안에 내역에서 취소" 정적 안내로 교체
