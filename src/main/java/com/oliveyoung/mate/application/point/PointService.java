@@ -308,7 +308,7 @@ public class PointService {
             .orElseThrow(() -> new PointAccountNotFoundException(cid));
 
         Map<UUID, Long> remainingBefore = point.getLedgers().stream()
-            .collect(Collectors.toMap(PointLedger::getLedgerId, l -> l.getRemaining().amount()));
+            .collect(Collectors.toMap(l -> l.getLedgerId(), l -> l.getRemaining().amount()));
 
         // 저장하지 않는다 — point.cancelUse()는 인메모리 애그리거트만 변경한다
         point.cancelUse(useLedger.getTxId());
