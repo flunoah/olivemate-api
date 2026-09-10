@@ -86,6 +86,17 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 
 제약: `uq_use_request_crew_idempotency (crew_id, idempotency_key)` UNIQUE
 
+## shedlock (`V9`)
+
+ShedLock 분산락 스키마(공식 권장 DDL, 애플리케이션 코드가 아닌 라이브러리가 직접 사용). 롤링 배포 중 신/구 인스턴스가 겹치는 순간 같은 `@Scheduled` 크론이 동시에 도는 것을 방지한다 — `PointGrantScheduler`/`PointExpiryScheduler`/`PointExpiryReminderScheduler`에 적용.
+
+| 컬럼 | 타입 | 비고 |
+|---|---|---|
+| name | VARCHAR(64) PK | 락 이름(`@SchedulerLock(name=...)`) |
+| lock_until | TIMESTAMP | |
+| locked_at | TIMESTAMP | |
+| locked_by | VARCHAR(255) | 락을 잡은 인스턴스 식별자 |
+
 ## notifications
 
 | 컬럼 | 타입 | 비고 |
@@ -165,3 +176,4 @@ PostgreSQL 17. `ddl-auto=update`(dev)로 엔티티에서 스키마가 자동 생
 | V6 | `push_subscriptions`에 채널별 알림 토글 컬럼 3종 추가 |
 | V7 | `point_ledger.idx_ledger_crew_type_expired` 추가 — 엔티티 `@Table(indexes=...)`에는 있었으나 V1~V6에 누락되어 있던 인덱스. Flyway 미적용 + prod `ddl-auto=validate` 조합상 이 문서가 갱신되기 전까지 운영 DB에는 실제로 없었을 가능성이 높음 |
 | V8 | `point_use_request` 테이블 신설 — `use()` 요청 멱등성 키 저장 |
+| V9 | `shedlock` 테이블 신설 — 배치 스케줄러 분산락 |

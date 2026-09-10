@@ -23,6 +23,12 @@
 
 ## 🟢 Low
 
+- [ ] `[BE]` Flyway 정식 도입 — 현재 `db/migration/*.sql`은 자동 실행되지 않고 운영 DB에 수동 `psql` 실행으로만 반영됨. prod 스키마 baseline 정합성 확인이 먼저 필요해 리스크가 커 별도 세션 권장
+- [ ] `[BE]` Spring Boot Actuator 추가 — 헬스체크/메트릭 관측성 확보
+- [ ] `[BE]` 레거시 제거 검토 — `jjwt-api`/`jjwt-impl`/`jjwt-jackson` 의존성, `JWT_SECRET`/`JWT_EXPIRE_MS` 환경변수(Phase 7 컷오버로 JWT 인증 자체가 삭제돼 더 이상 사용되지 않음), `product_request` 테이블(`V5`) 드롭 여부(위 항목과 중복, 통합 검토)
+- [ ] `[BE]` Admin key 상수 시간 비교 — `X-Admin-Key` 검증이 `String.equals`라 타이밍 공격 이론상 가능. `MessageDigest.isEqual`로 교체 권장(1줄). **별도로, `ADMIN_SECRET_KEY`가 Render 운영 환경변수에 실제로 설정돼 있는지 직접 콘솔에서 확인 필요** — 코드로는 확인 불가하며, README 기본값(`mate-admin-secret-key`)이 그대로 살아있으면 실제 보안 구멍
+- [ ] `[BE]` 성능 실측 — k6 등으로 FIFO 차감/야간 배치 부하 테스트 후 `docs/performance.md` 작성
+- [ ] README에 설계 문서(`docs/architecture.md` 등) 링크 추가, `point_ledger` 상태 전이도(EARN/INIT → USE/EXPIRE) 다이어그램 작성
 - [ ] `[FE]` 공통 컴포넌트 추출 (`Toast`, `Card`, `Button`)
 - [ ] `[FE]` 컬러 토큰 상수화
 - [ ] `[FE]` `NEXT_PUBLIC_ADMIN_KEY` 사용 재검토 (브라우저 번들 노출)
@@ -51,6 +57,8 @@
 
 ## ✅ Done
 
+- [x] `[BE]` ShedLock 배치 분산락 (2026-09-10) — 롤링 배포 중 신/구 인스턴스가 짧게 겹치는 순간 같은 `@Scheduled` 크론(`PointGrantScheduler`/`PointExpiryScheduler`/`PointExpiryReminderScheduler`)이 동시에 돌아 전 크루 포인트가 이중 지급되는 것을 방지. `shedlock` 테이블 신설(`V9`, 공식 권장 DDL), `ShedLockConfig`(`@EnableSchedulerLock` + `JdbcTemplateLockProvider`, 기존 Postgres 재사용·신규 인프라 없음), 세 스케줄러에 `@SchedulerLock` 부여. `ShedLockConfigTest`(실 Postgres로 두 스레드 동시 락 시도 → 하나만 실행됨)로 검증 — DB 필요해 CI에서는 `-PciSkipContextTest`로 제외
+  - **2026-09-10 후속(배포 순서 리스크 수정)**: `shedlock`은 JPA 엔티티가 아니라 `ddl-auto=validate`로 V9 미실행이 안 걸러짐 — 락 획득 실패를 shedlock 라이브러리가 "락 못 잡음"과 동일하게 처리해 세 스케줄러 본문이 텔레그램 알림 없이 조용히 스킵되는 구조였음. `ShedLockConfig.lockProvider`에서 빈 생성 시 `SELECT 1 FROM shedlock WHERE 1=0`으로 존재 확인 → V9 미실행 시 기동 자체가 실패하도록 변경(기존 `ddl-auto=validate`와 동일한 fail-fast)
 - [x] `[BE]` 포인트 사용(`use()`) 요청 멱등성 키 (2026-09-10) — 더블클릭/네트워크 재시도로 두 개의 독립된 `use()` 요청이 겹치지 않는 타이밍에 도착하면 낙관적 락으로도 못 막던 실제 중복 차감 시나리오 방어. `point_use_request(crew_id, idempotency_key, tx_id)` 테이블 신설(`V8`, `UNIQUE(crew_id, idempotency_key)`), 대시보드 포인트 사용 폼에 렌더링 시점 UUID hidden input 추가, `PointService.use()`가 FIFO 차감 전에 먼저 등록을 시도해 중복이면 재차감 없이 기존 `tx_id`의 결과를 그대로 반환. `PointServiceIdempotencyTest`로 검증
   - **2026-09-10 후속(트랜잭션 오염 버그 수정)**: `registerUseRequestIfAbsent`가 UNIQUE 위반(`DataIntegrityViolationException`)을 캐치해도, PostgreSQL은 그 시점에 이미 현재 트랜잭션 전체를 abort 상태로 만들어버려 바로 다음 줄 `findTxIdByIdempotencyKey` 조회가 "current transaction is aborted"로 죽고 500 + 텔레그램 알림으로 튀는 문제 발견(전부 mock 기반인 `PointServiceIdempotencyTest`는 이 시나리오를 검증 못 함). `registerUseRequestIfAbsent`에 `@Transactional(propagation = REQUIRES_NEW)` 추가해 UNIQUE 위반의 abort가 `use()` 메인 트랜잭션과 분리된 별도 커넥션에 갇히도록 수정
 - [x] `[BE]` `OptimisticLockingFailureException` 전용 핸들러 (2026-09-10) — `GlobalExceptionHandler`에 `@ExceptionHandler(ObjectOptimisticLockingFailureException.class)` 추가, 409 `CONCURRENT_MODIFICATION` + "다시 시도해주세요"로 응답. 기존 catch-all(500)과 분리해 텔레그램 오알림 방지

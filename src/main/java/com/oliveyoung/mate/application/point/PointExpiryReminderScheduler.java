@@ -3,6 +3,7 @@ package com.oliveyoung.mate.application.point;
 import com.oliveyoung.mate.presentation.TelegramNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class PointExpiryReminderScheduler {
     private final TelegramNotifier telegramNotifier;
 
     @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Seoul")
+    @SchedulerLock(name = "PointExpiryReminderScheduler_remindExpiringPoints")
     public void remindExpiringPoints() {
         try {
             telegramNotifier.sendJobReport(pointService.remindExpiringPoints());
