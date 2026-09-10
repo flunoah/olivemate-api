@@ -14,7 +14,6 @@
 - [ ] `[BE]` S18 알림 설정 시트가 현재 구독의 채널별 on/off 상태를 조회하는 API가 없어, 시트를 열 때마다 체크박스가 항상 전부 켜진 상태로 보임(저장은 정상 동작). `GET /push/subscribe/channels` 추가하면 해결
 - [ ] `[FE]` 하단 네비 `<a>` → `next/link`. 탭 전환마다 전체 리로드 중
 - [x] `[FE]` 알림 딥링크 `?date=` 파라미터 처리 (`useSearchParams`) — Phase 6에서 `/history`가 Thymeleaf `HistoryPageController`로 이관되며 `?date=` 쿼리파라미터를 서버에서 직접 처리하게 되어 해결(Next.js `useSearchParams` 구현은 더 이상 불필요)
-- [ ] `[BE]` `OptimisticLockingFailureException` 전용 핸들러. 현재 500으로 떨어짐
 - [ ] `[BE]` `Point.use()` — 만료 배치(`expireOld`)가 아직 안 돈 상태에서 만료 시각이 지난 원장만 남아있으면, FIFO 대상 필터(`!isExpired`)에서 전부 제외돼 실제로는 아무 원장도 차감되지 않는데 `balance`는 무조건 차감되고 `PointUsedEvent`도 발행됨. USE 원장이 안 생겨 거래 내역과 잔액이 어긋남. `PointTest.use_against_already_expired_ledger_does_not_deduct_but_still_reduces_balance`로 재현 확인
 - [ ] `[BE]` `Point.cancelUse()` — 동일 `txId`로 두 번 취소하면 복원할 EARN 원장(`amount>remaining`)이 이미 없어 실제 원장 복원은 0건인데 `balance`는 `totalToRestore`만큼 또 증가함. 중복 취소를 막는 가드가 없음. `PointTest.cancel_use_twice_with_same_tx_id_inflates_balance_without_restoring_ledgers`로 재현 확인
 - [ ] `[FE]` htmx/raw-fetch 요청 실패 시 화면에 아무 표시 없음. `dashboard.html`의 `postWorkDay()`는 `response.ok` 체크 없이 `Promise.all().finally(reload)`라 에러를 통째로 삼키고, `hx-post`류는 4xx/5xx면 기본적으로 타겟 스왑을 안 해 사용자가 실패 자체를 모름
@@ -52,6 +51,7 @@
 
 ## ✅ Done
 
+- [x] `[BE]` `OptimisticLockingFailureException` 전용 핸들러 (2026-09-10) — `GlobalExceptionHandler`에 `@ExceptionHandler(ObjectOptimisticLockingFailureException.class)` 추가, 409 `CONCURRENT_MODIFICATION` + "다시 시도해주세요"로 응답. 기존 catch-all(500)과 분리해 텔레그램 오알림 방지
 - [x] `[BE]` `PointService.cancelUse()`/`expirePoints()`, `AttendanceService.getThisWeekWorkDays()`의 타임존 버그 수정 (2026-09-10) — 시스템 기본 zone `LocalDate.now()`/`LocalDateTime.now()`를 `ZoneId.of("Asia/Seoul")` 명시로 교체. 같은 파일 내 다른 메서드에 이미 있던 패턴 재사용
 - [x] `[BE]` FIFO 로직 단위 테스트 (2026-09-10) — 신규 `PointTest.java`(순수 도메인, DB 의존 없음). 다중 원장 FIFO 차감, 만료일 동일 시 순서, 만료일 null 취급, 잔액 부족, cancelUse 분산 복원, 미매칭/중복 취소 등 8개 케이스. 작성 중 발견한 버그 2건은 위 Medium 섹션에 별도 기록
 - [x] CI 파이프라인 확장 (2026-09-10) — `./gradlew compileJava` → `./gradlew build -x tailwindBuild -PciSkipContextTest`. `MateApplicationTests`(유일한 `@SpringBootTest`)만 CI에서 제외(DB/JWT_SECRET/VAPID 키 없음), 나머지 테스트는 전부 CI에서 실행. 로컬 `./gradlew build`는 `ciSkipContextTest` 프로퍼티가 없어 기존처럼 컨텍스트 로딩까지 전부 실행됨

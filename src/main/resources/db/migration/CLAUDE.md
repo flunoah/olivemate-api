@@ -150,7 +150,7 @@ CSV 문자열로 저장하는 구조라 **요일 조건으로 SQL 검색이 불�
 동시에 같은 크루의 포인트를 사용하려 하면(더블 클릭, 여러 탭 등), 나중 트랜잭션이 `OptimisticLockingFailureException`으로 실패한다. 이것이 **잔액 음수 방지의 핵심 방어선**이다.
 
 - 프론트는 사용 버튼에 `disabled` 처리를 병행해 중복 요청을 줄인다.
-- 이 예외는 현재 `GlobalExceptionHandler`의 catch-all(500)로 떨어진다. 사용자에게 "잠시 후 다시 시도해주세요"로 안내하려면 전용 핸들러 추가를 검토할 것.
+- `GlobalExceptionHandler`에 전용 핸들러가 있어 409 `CONCURRENT_MODIFICATION` + "다시 시도해주세요"로 응답한다(텔레그램 알림 제외 — 정상적인 동시 클릭 상황).
 
 ---
 
