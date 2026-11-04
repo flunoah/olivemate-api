@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CrewCheck는 올리브영 매장 크루(직원)를 위한 근무 등록 및 포인트 관리 풀스택 웹 애플리케이션이다.
+마이자소는 올리브영 매장 크루(직원)를 위한 근무 등록 및 포인트 관리 풀스택 웹 애플리케이션이다.
 크루가 근무일을 등록하면 익일 자동으로 포인트가 적립되고, 적립일 기준 31일 후 만료된다.
 포인트 사용 시 만료가 임박한 것부터 FIFO로 차감되며, 당일 사용 건에 한해 취소할 수 있다.
 현재 Web Push 기반 적립 알림 기능이 추가되어 있다.
@@ -33,7 +33,8 @@ CrewCheck는 올리브영 매장 크루(직원)를 위한 근무 등록 및 포�
 - **Frontend**: Next.js 15 (App Router), React, TypeScript. 전 페이지 `"use client"`로 사실상 SPA (SSR 미사용). 스타일은 inline style 객체 (CSS 프레임워크 없음).
 - **Backend**: Java 21, Spring Boot 4.0.7, Spring Data JPA / Hibernate, Lombok. Web Push는 `nl.martijndwars:web-push` + BouncyCastle Provider.
 - **Database**: PostgreSQL 17 (dev: `ddl-auto=update` / prod: `ddl-auto=validate`). prod 스키마의 최종 소스는 `resources/db/migration/*.sql`.
-- **Auth**: Spring Security + JWT (jjwt 0.12.6). Access Token은 `Authorization: Bearer`, 갱신은 `X-Refresh-Token` 헤더로 `/api/v1/auth/refresh` 호출. 관리자 API는 `X-Admin-Key` 헤더 추가 요구.
+- **Auth**: Spring Security 기반 세션 인증. 로그인은 Form Login을 사용하며, 인증 상태는 HTTP Session으로 유지한다. 
+브라우저는 JSESSIONID 쿠키를 사용하고, CSRF 보호를 활성화한다. 관리자 배치 API는 X-Admin-Key 헤더로 별도 인증한다.
 
 ## Monorepo Commands
 
